@@ -19,7 +19,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
 }) => {
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
-  // Gestion des événements clavier - VERSION ANTI-DOUBLE ROBUSTE
+  // Gestion des événements clavier
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -31,19 +31,15 @@ export const GameArea: React.FC<GameAreaProps> = ({
       
       // Empêcher les appels doubles (même touche dans les 100ms)
       if (e.key === lastKey && now - lastKeyTime < 100) {
-        console.log('🚫 Appel dupliqué ignoré pour:', e.key);
         return;
       }
       
       lastKey = e.key;
       lastKeyTime = now;
       
-      // Log pour debug
-      console.log('🎹 Touche détectée:', e.key, 'isPlaying:', isPlaying);
-      
       // Ne pas empêcher F12, F5, etc.
       if (e.key === 'F12' || e.key === 'F5' || e.ctrlKey || e.altKey || e.metaKey) {
-        return; // Laisser passer les touches système
+        return;
       }
 
       // Empêcher les actions par défaut pour les autres touches
@@ -51,10 +47,8 @@ export const GameArea: React.FC<GameAreaProps> = ({
       e.stopPropagation();
       
       if (e.key === 'Backspace') {
-        console.log('⌫ Backspace détecté');
         onBackspace();
       } else if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
-        console.log('✅ Lettre détectée:', e.key);
         onKeyPress(e.key.toLowerCase());
       }
     };
@@ -63,7 +57,6 @@ export const GameArea: React.FC<GameAreaProps> = ({
     const focusGameArea = () => {
       if (gameAreaRef.current) {
         gameAreaRef.current.focus();
-        console.log('🎯 Focus mis sur la zone de jeu');
       }
     };
 
@@ -95,7 +88,6 @@ export const GameArea: React.FC<GameAreaProps> = ({
     if (isPlaying && gameAreaRef.current) {
       setTimeout(() => {
         gameAreaRef.current?.focus();
-        console.log('🎯 Focus automatique appliqué');
       }, 100);
     }
   }, [isPlaying]);
@@ -105,10 +97,8 @@ export const GameArea: React.FC<GameAreaProps> = ({
       {/* Cadre de jeu avec focus pour capturer les événements clavier */}
       <div 
         ref={gameAreaRef}
-        tabIndex={0} // Permet de recevoir le focus
+        tabIndex={0}
         className="relative w-full max-w-md h-[85vh] bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900 rounded-xl border-2 border-blue-500/50 shadow-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-green-400"
-        onFocus={() => console.log('🎯 Zone de jeu a reçu le focus')}
-        onBlur={() => console.log('❌ Zone de jeu a perdu le focus')}
       >
         
         {/* Zone de jeu délimitée */}
@@ -172,22 +162,6 @@ export const GameArea: React.FC<GameAreaProps> = ({
               <div className="text-sm mb-2">Cliquez pour activer puis tapez directement</div>
               <div className="text-xs text-white/50">Pas besoin de zone de texte</div>
             </div>
-          </div>
-        )}
-
-        {/* Debug info amélioré */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="absolute bottom-2 left-2 bg-black/80 text-white p-2 rounded text-xs border border-yellow-400/50">
-            <div>🎮 Jeu: {isPlaying ? 'Actif' : 'Inactif'}</div>
-            <div>📝 Saisie: "{currentInput}"</div>
-            <div>📊 Mots: {fallingWords.length}</div>
-            {fallingWords.length > 0 && (
-              <>
-                <div>🎯 Mot: "{fallingWords[0].text}"</div>
-                <div>📍 Y: {fallingWords[0].y.toFixed(1)}%</div>
-              </>
-            )}
-            <div className="text-green-400 mt-1">✅ Clavier: {isPlaying ? 'ON' : 'OFF'}</div>
           </div>
         )}
 
