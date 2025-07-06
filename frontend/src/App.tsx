@@ -27,22 +27,32 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 relative overflow-hidden">
-      {/* Game Area - mode clavier direct */}
-      <GameArea
-        fallingWords={gameState.fallingWords}
-        currentInput={gameState.currentInput}
-        onKeyPress={handleKeyPress}
-        onBackspace={handleBackspace}
-        onTogglePause={pauseGame}
-        isPlaying={gameState.isPlaying}
-        isPaused={gameState.isPaused}
-      />
+      {/* Layout principal avec jeu centré */}
+      <div className="min-h-screen flex items-center justify-center p-4">
+        {/* Container relatif pour le jeu et ses stats */}
+        <div className="relative">
+          {/* Game Area */}
+          <GameArea
+            fallingWords={gameState.fallingWords}
+            currentInput={gameState.currentInput}
+            onKeyPress={handleKeyPress}
+            onBackspace={handleBackspace}
+            onTogglePause={pauseGame}
+            isPlaying={gameState.isPlaying}
+            isPaused={gameState.isPaused}
+          />
 
-      {/* Game Stats - overlay */}
-      <GameStats 
-        stats={gameState.stats} 
-        isVisible={gameState.isPlaying && !gameState.isPaused}
-      />
+          {/* Game Stats - en haut à droite du jeu */}
+          {gameState.isPlaying && !gameState.isPaused && (
+            <div className="absolute top-0 -right-56">
+              <GameStats 
+                stats={gameState.stats} 
+                isVisible={true}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Game Menu - overlay */}
       {(!gameState.isPlaying || gameState.isPaused) && !gameState.isGameOver && (

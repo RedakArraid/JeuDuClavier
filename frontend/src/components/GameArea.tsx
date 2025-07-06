@@ -108,12 +108,12 @@ export const GameArea: React.FC<GameAreaProps> = ({
   }, [isPlaying]);
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="flex-shrink-0">
       {/* Cadre de jeu avec focus pour capturer les événements clavier */}
       <div 
         ref={gameAreaRef}
         tabIndex={0}
-        className="relative w-full max-w-md h-[85vh] bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900 rounded-xl border-2 border-blue-500/50 shadow-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-green-400"
+        className="relative w-[640px] h-[85vh] bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900 rounded-xl border-2 border-blue-500/50 shadow-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-green-400"
       >
         
         {/* Zone de jeu délimitée */}
@@ -166,7 +166,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-xs text-center">
             <div>Espace ou ESC pour pause</div>
           </div>
-        )}
+        )}      
       </div>
     </div>
   );

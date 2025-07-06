@@ -18,7 +18,7 @@ export const GameStats: React.FC<GameStatsProps> = ({ stats, isVisible = true })
   ];
 
   return (
-    <div className="absolute top-4 right-4 bg-gray-900/80 backdrop-blur-sm rounded-lg p-4 min-w-[200px]">
+    <div className="bg-gray-900/80 backdrop-blur-sm rounded-lg p-4 min-w-[200px]">
       <div className="text-center mb-3">
         <div className="text-2xl font-bold text-white">Level {stats.level}</div>
         <div className="text-sm text-gray-400">{stats.wordsTyped} words typed</div>
