@@ -7,7 +7,9 @@ interface GameAreaProps {
   currentInput: string;
   onKeyPress: (key: string) => void;
   onBackspace: () => void;
+  onTogglePause: () => void;
   isPlaying: boolean;
+  isPaused: boolean;
 }
 
 export const GameArea: React.FC<GameAreaProps> = ({
@@ -15,7 +17,9 @@ export const GameArea: React.FC<GameAreaProps> = ({
   currentInput,
   onKeyPress,
   onBackspace,
-  isPlaying
+  onTogglePause,
+  isPlaying,
+  isPaused
 }) => {
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
@@ -45,6 +49,17 @@ export const GameArea: React.FC<GameAreaProps> = ({
       // Empêcher les actions par défaut pour les autres touches
       e.preventDefault();
       e.stopPropagation();
+      
+      // La pause fonctionne toujours
+      if (e.key === ' ' || e.key === 'Escape') {
+        onTogglePause();
+        return;
+      }
+      
+      // Les autres touches ne fonctionnent que si le jeu n'est pas en pause
+      if (isPaused) {
+        return;
+      }
       
       if (e.key === 'Backspace') {
         onBackspace();
@@ -81,7 +96,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
         gameAreaRef.current.removeEventListener('click', handleClick);
       }
     };
-  }, [isPlaying, onKeyPress, onBackspace]);
+  }, [isPlaying, isPaused, onKeyPress, onBackspace, onTogglePause]);
 
   // Focus automatique quand le jeu commence/reprend
   useEffect(() => {
@@ -123,8 +138,21 @@ export const GameArea: React.FC<GameAreaProps> = ({
           )}
         </div>
 
+        {/* Overlay de pause */}
+        {isPaused && (
+          <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-20 rounded-xl">
+            <div className="text-center text-white">
+              <div className="text-4xl mb-4">⏸️</div>
+              <div className="text-2xl font-bold mb-2">PAUSE</div>
+              <div className="text-sm opacity-80">
+                Espace ou ESC pour reprendre
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Indicateur de saisie en cours */}
-        {isPlaying && currentInput && (
+        {isPlaying && !isPaused && currentInput && (
           <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
             <div className="bg-black/80 text-white px-4 py-2 rounded-lg text-lg font-mono border border-green-400/50">
               <span className="text-green-400">{currentInput}</span>
@@ -133,10 +161,10 @@ export const GameArea: React.FC<GameAreaProps> = ({
           </div>
         )}
 
-        {/* Indicateur de clic pour activer */}
-        {isPlaying && (
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-xs animate-pulse">
-            Espace ou ESC pour mettre pause
+        {/* Indicateur de pause */}
+        {isPlaying && !isPaused && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-xs text-center">
+            <div>Espace ou ESC pour pause</div>
           </div>
         )}
       </div>

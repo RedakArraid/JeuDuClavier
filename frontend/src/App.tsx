@@ -33,7 +33,9 @@ function App() {
         currentInput={gameState.currentInput}
         onKeyPress={handleKeyPress}
         onBackspace={handleBackspace}
-        isPlaying={gameState.isPlaying && !gameState.isPaused}
+        onTogglePause={pauseGame}
+        isPlaying={gameState.isPlaying}
+        isPaused={gameState.isPaused}
       />
 
       {/* Game Stats - overlay */}
