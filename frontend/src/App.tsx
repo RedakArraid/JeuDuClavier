@@ -26,7 +26,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 relative overflow-hidden">
-      {/* Game Area */}
+      {/* Game Area - occuppe tout l'écran */}
       <GameArea
         fallingWords={gameState.fallingWords}
         currentInput={gameState.currentInput}
@@ -34,13 +34,13 @@ function App() {
         isPlaying={gameState.isPlaying && !gameState.isPaused}
       />
 
-      {/* Game Stats */}
+      {/* Game Stats - overlay */}
       <GameStats 
         stats={gameState.stats} 
         isVisible={gameState.isPlaying && !gameState.isPaused}
       />
 
-      {/* Game Menu */}
+      {/* Game Menu - overlay */}
       {(!gameState.isPlaying || gameState.isPaused) && !gameState.isGameOver && (
         <GameMenu
           isPlaying={gameState.isPlaying}
@@ -53,7 +53,7 @@ function App() {
         />
       )}
 
-      {/* Game Over Screen */}
+      {/* Game Over Screen - overlay */}
       {gameState.isGameOver && (
         <GameOverScreen
           stats={gameState.stats}
