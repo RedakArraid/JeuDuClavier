@@ -4,18 +4,25 @@ import { GameArea } from './components/GameArea';
 import { GameStats } from './components/GameStats';
 import { GameMenu } from './components/GameMenu';
 import { GameOverScreen } from './components/GameOverScreen';
+import { NewScoreModal } from './components/NewScoreModal';
+import { HighScoresDisplay } from './components/HighScoresDisplay';
 import { useLanguage } from './i18n/LanguageContext';
 
 function App() {
   const { language } = useLanguage();
   const { 
-    gameState, 
+    gameState,
+    highScores,
+    showNewScoreModal,
+    isNewHighScore,
     startGame, 
     pauseGame, 
     stopGame, 
     resetGame, 
     handleKeyPress,
-    handleBackspace
+    handleBackspace,
+    saveNewHighScore,
+    closeNewScoreModal
   } = useGame(language);
 
   const handleRestart = () => {
@@ -59,6 +66,18 @@ function App() {
               />
             </div>
           )}
+
+          {/* High Scores - en dessous des stats pendant le jeu */}
+          {gameState.isPlaying && !gameState.isPaused && (
+            <div className="absolute top-72 -right-72">
+              <HighScoresDisplay
+                highScores={highScores}
+                difficulty={gameState.difficulty}
+                language={language}
+                isVisible={true}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -82,6 +101,16 @@ function App() {
           onNewGame={handleNewGame}
         />
       )}
+
+      {/* New Score Modal */}
+      <NewScoreModal
+        isOpen={showNewScoreModal}
+        score={gameState.stats.score}
+        difficulty={gameState.difficulty}
+        language={language}
+        onSubmit={saveNewHighScore}
+        onClose={closeNewScoreModal}
+      />
 
 
     </div>

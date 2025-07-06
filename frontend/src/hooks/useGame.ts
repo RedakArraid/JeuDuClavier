@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FallingWord, DifficultyLevel, GameConfig } from '../types/game';
 import { getRandomWord, reverseWord } from '../data/words';
 import { Language } from '../i18n/translations';
+import { highScoreService } from '../services/highScoreService';
+import { HighScore } from '../types/highscore';
 
 const GAME_CONFIG: Record<DifficultyLevel, GameConfig> = {
   easy: { wordSpeed: 0.3, spawnRate: 0, maxWords: 1, reverseWords: false },
@@ -48,10 +50,52 @@ export const useGame = (language: Language = 'fr') => {
     gameStartTime: 0
   });
 
+  const [highScores, setHighScores] = useState<HighScore[]>([]);
+  const [showNewScoreModal, setShowNewScoreModal] = useState(false);
+  const [isNewHighScore, setIsNewHighScore] = useState(false);
+
   const gameLoopRef = useRef<number>();
   const originalWordRef = useRef<string>('');
   const currentTypedRef = useRef<string>('');
   const shouldSpawnRef = useRef<boolean>(false);
+
+  // Charger les high scores quand la difficulté ou la langue change
+  useEffect(() => {
+    const scores = highScoreService.getHighScores(language, gameState.difficulty);
+    setHighScores(scores);
+  }, [language, gameState.difficulty]);
+
+  // Vérifier si c'est un nouveau high score
+  const checkForNewHighScore = useCallback((finalScore: number) => {
+    const isNewRecord = highScoreService.isNewHighScore(finalScore, language, gameState.difficulty);
+    setIsNewHighScore(isNewRecord);
+    if (isNewRecord) {
+      setShowNewScoreModal(true);
+    }
+  }, [language, gameState.difficulty]);
+
+  // Sauvegarder un nouveau high score
+  const saveNewHighScore = useCallback((playerName: string, email?: string) => {
+    const stats = gameState.stats;
+    const newScore = highScoreService.addHighScore(
+      playerName,
+      stats.score,
+      stats.wpm,
+      stats.accuracy,
+      stats.wordsTyped,
+      stats.timeElapsed,
+      gameState.difficulty,
+      language,
+      email
+    );
+    
+    // Recharger les high scores
+    const updatedScores = highScoreService.getHighScores(language, gameState.difficulty);
+    setHighScores(updatedScores);
+    setShowNewScoreModal(false);
+    
+    return newScore;
+  }, [gameState.stats, gameState.difficulty, language]);
 
   const createFallingWord = useCallback((difficulty: DifficultyLevel, wordsTyped: number = 0): FallingWord => {
     const config = GAME_CONFIG[difficulty];
@@ -89,6 +133,11 @@ export const useGame = (language: Language = 'fr') => {
       // Game Over si le mot tombe trop bas
       if (newY > 92) {
         console.log('💀 GAME OVER - Mot tombé trop bas:', currentWord.text, 'Y:', newY);
+        
+        // Vérifier si c'est un nouveau high score avant le game over
+        const finalScore = prev.stats.score;
+        setTimeout(() => checkForNewHighScore(finalScore), 100);
+        
         return {
           ...prev,
           isPlaying: false,
@@ -119,7 +168,7 @@ export const useGame = (language: Language = 'fr') => {
         }
       };
     });
-  }, []);
+  }, [checkForNewHighScore]);
 
   // Gestion d'une touche pressée
   const handleKeyPress = useCallback((key: string) => {
@@ -271,6 +320,8 @@ export const useGame = (language: Language = 'fr') => {
     originalWordRef.current = '';
     currentTypedRef.current = '';
     shouldSpawnRef.current = true;
+    setShowNewScoreModal(false);
+    setIsNewHighScore(false);
     
     setGameState({
       isPlaying: true,
@@ -305,13 +356,19 @@ export const useGame = (language: Language = 'fr') => {
     shouldSpawnRef.current = false;
     currentTypedRef.current = '';
     
+    // Vérifier si c'est un nouveau high score avant d'arrêter
+    const finalScore = gameState.stats.score;
+    if (finalScore > 0) {
+      checkForNewHighScore(finalScore);
+    }
+    
     setGameState(prev => ({
       ...prev,
       isPlaying: false,
       isPaused: false,
       isGameOver: true
     }));
-  }, []);
+  }, [gameState.stats.score, checkForNewHighScore]);
 
   const resetGame = useCallback(() => {
     if (gameLoopRef.current) {
@@ -321,6 +378,8 @@ export const useGame = (language: Language = 'fr') => {
     originalWordRef.current = '';
     currentTypedRef.current = '';
     shouldSpawnRef.current = false;
+    setShowNewScoreModal(false);
+    setIsNewHighScore(false);
     
     setGameState(prev => ({
       ...prev,
@@ -378,11 +437,16 @@ export const useGame = (language: Language = 'fr') => {
 
   return {
     gameState,
+    highScores,
+    showNewScoreModal,
+    isNewHighScore,
     startGame,
     pauseGame,
     stopGame,
     resetGame,
     handleKeyPress,
-    handleBackspace
+    handleBackspace,
+    saveNewHighScore,
+    closeNewScoreModal: () => setShowNewScoreModal(false)
   };
 };
