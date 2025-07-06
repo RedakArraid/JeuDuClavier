@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { FallingWord } from './FallingWord';
-import { FallingWord as FallingWordType } from '../types/game';
+import { FallingWord as FallingWordType, DifficultyLevel } from '../types/game';
 
 interface GameAreaProps {
   fallingWords: FallingWordType[];
@@ -10,6 +10,7 @@ interface GameAreaProps {
   onTogglePause: () => void;
   isPlaying: boolean;
   isPaused: boolean;
+  difficulty: DifficultyLevel;
 }
 
 export const GameArea: React.FC<GameAreaProps> = ({
@@ -19,7 +20,8 @@ export const GameArea: React.FC<GameAreaProps> = ({
   onBackspace,
   onTogglePause,
   isPlaying,
-  isPaused
+  isPaused,
+  difficulty
 }) => {
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
@@ -127,7 +129,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
           
           {/* Falling word - un seul à la fois */}
           {fallingWords.map((word) => (
-            <FallingWord key={word.id} word={word} />
+            <FallingWord key={word.id} word={word} difficulty={difficulty} />
           ))}
           
           {/* Indication si aucun mot */}
@@ -154,9 +156,25 @@ export const GameArea: React.FC<GameAreaProps> = ({
         {/* Indicateur de saisie en cours */}
         {isPlaying && !isPaused && currentInput && (
           <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-black/80 text-white px-4 py-2 rounded-lg text-lg font-mono border border-green-400/50">
-              <span className="text-green-400">{currentInput}</span>
-              <span className="animate-pulse text-green-400">|</span>
+            <div className={`bg-black/80 text-white px-4 py-2 rounded-lg text-lg font-mono border ${
+              difficulty === 'expert' 
+                ? 'border-purple-400/50' 
+                : 'border-green-400/50'
+            }`}>
+              {difficulty === 'expert' ? (
+                <>
+                  <span className="text-purple-400">{currentInput}</span>
+                  <span className="animate-pulse text-purple-400">|</span>
+                  <div className="text-xs text-purple-300 mt-1 text-center">
+                    Right to left: {currentInput.split('').reverse().join('')}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className="text-green-400">{currentInput}</span>
+                  <span className="animate-pulse text-green-400">|</span>
+                </>
+              )}
             </div>
           </div>
         )}

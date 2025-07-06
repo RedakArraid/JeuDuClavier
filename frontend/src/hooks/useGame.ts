@@ -56,10 +56,9 @@ export const useGame = () => {
     const config = GAME_CONFIG[difficulty];
     let word = getRandomWord(difficulty);
     
-    if (config.reverseWords) {
-      word = reverseWord(word);
-    }
-
+    // Pour le mode expert, on garde le mot normal (pas inversé)
+    // La logique d'inversion sera gérée dans la saisie
+    
     originalWordRef.current = word;
     currentTypedRef.current = '';
 
@@ -130,13 +129,39 @@ export const useGame = () => {
     
     const originalWord = originalWordRef.current;
     const currentTyped = currentTypedRef.current;
-    const newTyped = currentTyped + key;
+    const isExpertMode = gameState.difficulty === 'expert';
     
-    // Vérifier si la nouvelle saisie correspond au début du mot
-    if (originalWord.toLowerCase().startsWith(newTyped.toLowerCase())) {
+    let isValidKey = false;
+    let newTyped = '';
+    
+    if (isExpertMode) {
+      // Mode expert : saisie de droite à gauche
+      const expectedIndex = originalWord.length - 1 - currentTyped.length;
+      const expectedChar = originalWord[expectedIndex];
+      
+      if (key.toLowerCase() === expectedChar.toLowerCase()) {
+        isValidKey = true;
+        newTyped = currentTyped + key;
+      }
+    } else {
+      // Modes normaux : saisie de gauche à droite
+      newTyped = currentTyped + key;
+      isValidKey = originalWord.toLowerCase().startsWith(newTyped.toLowerCase());
+    }
+    
+    if (isValidKey) {
       // Mettre à jour la ref immédiatement
       currentTypedRef.current = newTyped;
-      const remainingText = originalWord.substring(newTyped.length);
+      
+      // Calculer le texte restant pour l'affichage
+      let remainingText = '';
+      if (isExpertMode) {
+        // En mode expert, on retire les lettres par la droite
+        remainingText = originalWord.substring(0, originalWord.length - newTyped.length);
+      } else {
+        // En mode normal, on retire les lettres par la gauche
+        remainingText = originalWord.substring(newTyped.length);
+      }
       
       // Mot complètement tapé
       if (remainingText === '') {
@@ -206,7 +231,7 @@ export const useGame = () => {
         }
       }));
     }
-  }, [gameState.fallingWords.length]);
+  }, [gameState.fallingWords.length, gameState.difficulty]);
 
   // Gestion de la touche Backspace
   const handleBackspace = useCallback(() => {
@@ -220,7 +245,17 @@ export const useGame = () => {
       currentTypedRef.current = newTyped;
       
       const originalWord = originalWordRef.current;
-      const remainingText = originalWord.substring(newTyped.length);
+      const isExpertMode = prev.difficulty === 'expert';
+      
+      // Calculer le texte restant pour l'affichage
+      let remainingText = '';
+      if (isExpertMode) {
+        // En mode expert, on remet les lettres par la droite
+        remainingText = originalWord.substring(0, originalWord.length - newTyped.length);
+      } else {
+        // En mode normal, on remet les lettres par la gauche
+        remainingText = originalWord.substring(newTyped.length);
+      }
       
       // Mettre à jour le mot affiché
       const currentWord = prev.fallingWords[0];

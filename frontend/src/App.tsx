@@ -40,6 +40,7 @@ function App() {
             onTogglePause={pauseGame}
             isPlaying={gameState.isPlaying}
             isPaused={gameState.isPaused}
+            difficulty={gameState.difficulty}
           />
 
           {/* Game Stats - en haut à droite du jeu */}
