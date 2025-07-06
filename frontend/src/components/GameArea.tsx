@@ -133,47 +133,10 @@ export const GameArea: React.FC<GameAreaProps> = ({
           </div>
         )}
 
-        {/* Instructions de jeu - plus visibles */}
-        {isPlaying && (
-          <div className="absolute top-2 right-2 text-xs text-white/90 text-right leading-tight bg-black/50 p-2 rounded">
-            <div>🎯 Tapez directement</div>
-            <div>⌫ Backspace pour effacer</div>
-            <div>📝 Lettres A-Z uniquement</div>
-          </div>
-        )}
-
-        {/* Indicateur de focus avec statut plus détaillé */}
-        {isPlaying && (
-          <div className="absolute top-2 left-2 flex items-center space-x-2 text-xs text-white/90 bg-black/50 p-2 rounded">
-            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-            <div>
-              <div>Clavier actif</div>
-              <div className="text-green-400">Mode Direct</div>
-            </div>
-          </div>
-        )}
-
-        {/* Message d'aide si pas de mot */}
-        {!isPlaying && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-white/70 bg-black/50 p-6 rounded-lg">
-              <div className="text-3xl mb-3">⌨️</div>
-              <div className="text-xl mb-2">Mode Clavier Direct</div>
-              <div className="text-sm mb-2">Cliquez pour activer puis tapez directement</div>
-              <div className="text-xs text-white/50">Pas besoin de zone de texte</div>
-            </div>
-          </div>
-        )}
-
-        {/* Titre du mode */}
-        <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-white font-bold text-sm">
-          Mode Clavier Direct - {isPlaying ? 'ACTIF' : 'INACTIF'}
-        </div>
-
         {/* Indicateur de clic pour activer */}
         {isPlaying && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-xs animate-pulse">
-            Cliquez ici si le clavier ne répond pas
+            Espace ou ESC pour mettre pause
           </div>
         )}
       </div>
