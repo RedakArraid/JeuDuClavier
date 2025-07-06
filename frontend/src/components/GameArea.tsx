@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { FallingWord } from './FallingWord';
 import { FallingWord as FallingWordType, DifficultyLevel } from '../types/game';
+import { useLanguage } from '../i18n/LanguageContext';
 
 interface GameAreaProps {
   fallingWords: FallingWordType[];
@@ -25,6 +26,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
   isPaused,
   difficulty
 }) => {
+  const { t } = useLanguage();
   const gameAreaRef = useRef<HTMLDivElement>(null);
 
   // Gestion des événements clavier
@@ -141,7 +143,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
           {/* Indication si aucun mot */}
           {fallingWords.length === 0 && isPlaying && (
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/50 text-lg animate-pulse">
-              Prochain mot...
+              {t.nextWord}
             </div>
           )}
         </div>
@@ -151,19 +153,19 @@ export const GameArea: React.FC<GameAreaProps> = ({
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-20 rounded-xl">
             <div className="text-center text-white max-w-md">
               <div className="text-4xl mb-4">⏸️</div>
-              <div className="text-2xl font-bold mb-4">PAUSE</div>
+              <div className="text-2xl font-bold mb-4">{t.gamePaused}</div>
               
               <div className="space-y-3 text-sm opacity-90">
                 <div className="flex items-center justify-center space-x-2">
                   <span className="bg-gray-700 px-2 py-1 rounded text-xs font-mono">SPACE</span>
                   <span>ou</span>
                   <span className="bg-gray-700 px-2 py-1 rounded text-xs font-mono">ESC</span>
-                  <span>pour reprendre</span>
+                  <span>{t.spaceOrEscResume}</span>
                 </div>
                 
                 <div className="flex items-center justify-center space-x-2">
                   <span className="bg-gray-700 px-2 py-1 rounded text-xs font-mono">M</span>
-                  <span>pour retourner au menu principal</span>
+                  <span>{t.mForMenu}</span>
                 </div>
               </div>
               
@@ -173,13 +175,13 @@ export const GameArea: React.FC<GameAreaProps> = ({
                   onClick={onTogglePause}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                  ▶️ Reprendre
+                  ▶️ {t.resume}
                 </button>
                 <button
                   onClick={onReturnToMenu}
                   className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
                 >
-                  🏠 Menu
+                  🏠 {t.menu}
                 </button>
               </div>
             </div>
@@ -215,7 +217,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
         {/* Indicateur de pause */}
         {isPlaying && !isPaused && (
           <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-xs text-center">
-            <div>Espace ou ESC pour pause</div>
+            <div>{t.spaceOrEscPause}</div>
           </div>
         )}      
       </div>

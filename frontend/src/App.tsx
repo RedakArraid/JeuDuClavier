@@ -4,8 +4,10 @@ import { GameArea } from './components/GameArea';
 import { GameStats } from './components/GameStats';
 import { GameMenu } from './components/GameMenu';
 import { GameOverScreen } from './components/GameOverScreen';
+import { useLanguage } from './i18n/LanguageContext';
 
 function App() {
+  const { language } = useLanguage();
   const { 
     gameState, 
     startGame, 
@@ -14,7 +16,7 @@ function App() {
     resetGame, 
     handleKeyPress,
     handleBackspace
-  } = useGame();
+  } = useGame(language);
 
   const handleRestart = () => {
     resetGame();

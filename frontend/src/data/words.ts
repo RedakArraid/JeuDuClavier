@@ -1,33 +1,64 @@
+import { Language } from '../i18n/translations';
+
 export const wordLists = {
-  easy: [
-    'cat', 'dog', 'sun', 'run', 'fun', 'car', 'eat', 'red', 'big', 'yes',
-    'no', 'go', 'up', 'me', 'we', 'he', 'she', 'can', 'see', 'the',
-    'and', 'you', 'are', 'not', 'but', 'was', 'his', 'her', 'him'
-  ],
-  normal: [
-    'house', 'water', 'light', 'world', 'music', 'dance', 'smile', 'dream',
-    'story', 'peace', 'happy', 'friend', 'family', 'nature', 'flower',
-    'mountain', 'ocean', 'forest', 'animal', 'planet', 'future', 'memory',
-    'journey', 'freedom', 'courage', 'wisdom', 'beauty', 'energy', 'wonder'
-  ],
-  hard: [
-    'technology', 'development', 'programming', 'algorithm', 'architecture',
-    'psychology', 'philosophy', 'communication', 'international', 'organization',
-    'responsibility', 'understanding', 'opportunities', 'achievements', 'imagination',
-    'extraordinary', 'professional', 'transformation', 'collaboration', 'investigation',
-    'determination', 'concentration', 'representation', 'administration', 'configuration'
-  ],
-  expert: [
-    'implementation', 'synchronization', 'authentication', 'optimization',
-    'characteristics', 'responsibilities', 'recommendations', 'specifications',
-    'infrastructure', 'documentation', 'internationalization', 'troubleshooting',
-    'acknowledgment', 'accomplishment', 'comprehensive', 'unprecedented',
-    'revolutionary', 'extraordinary', 'sophisticated', 'breakthrough'
-  ]
+  fr: {
+    easy: [
+      'CHAT', 'CHIEN', 'SOLEIL', 'COURS', 'JOUE', 'AUTO', 'MANGE', 'ROUGE', 'GRAND', 'OUI',
+      'NON', 'VA', 'HAUT', 'MOI', 'NOUS', 'IL', 'ELLE', 'PEUT', 'VOIR', 'LE',
+      'ET', 'TU', 'ES', 'PAS', 'MAIS', 'ETAIT', 'SON', 'SA', 'LUI'
+    ],
+    normal: [
+      'MAISON', 'EAU', 'LUMIERE', 'MONDE', 'MUSIQUE', 'DANSE', 'SOURIRE', 'REVE',
+      'HISTOIRE', 'PAIX', 'HEUREUX', 'AMI', 'FAMILLE', 'NATURE', 'FLEUR',
+      'MONTAGNE', 'OCEAN', 'FORET', 'ANIMAL', 'PLANETE', 'FUTUR', 'MEMOIRE',
+      'VOYAGE', 'LIBERTE', 'COURAGE', 'SAGESSE', 'BEAUTE', 'ENERGIE', 'MERVEILLE'
+    ],
+    hard: [
+      'TECHNOLOGIE', 'DEVELOPPEMENT', 'PROGRAMMATION', 'ALGORITHME', 'ARCHITECTURE',
+      'PSYCHOLOGIE', 'PHILOSOPHIE', 'COMMUNICATION', 'INTERNATIONAL', 'ORGANISATION',
+      'RESPONSABILITE', 'COMPREHENSION', 'OPPORTUNITES', 'REALISATIONS', 'IMAGINATION',
+      'EXTRAORDINAIRE', 'PROFESSIONNEL', 'TRANSFORMATION', 'COLLABORATION', 'INVESTIGATION',
+      'DETERMINATION', 'CONCENTRATION', 'REPRESENTATION', 'ADMINISTRATION', 'CONFIGURATION'
+    ],
+    expert: [
+      'IMPLEMENTATION', 'SYNCHRONISATION', 'AUTHENTIFICATION', 'OPTIMISATION',
+      'CARACTERISTIQUES', 'RESPONSABILITES', 'RECOMMANDATIONS', 'SPECIFICATIONS',
+      'INFRASTRUCTURE', 'DOCUMENTATION', 'INTERNATIONALISATION', 'DEPANNAGE',
+      'RECONNAISSANCE', 'ACCOMPLISSEMENT', 'COMPREHENSIF', 'SANS PRECEDENT',
+      'REVOLUTIONNAIRE', 'EXTRAORDINAIRE', 'SOPHISTIQUE', 'PERCEE'
+    ]
+  },
+  en: {
+    easy: [
+      'CAT', 'DOG', 'SUN', 'RUN', 'FUN', 'CAR', 'EAT', 'RED', 'BIG', 'YES',
+      'NO', 'GO', 'UP', 'ME', 'WE', 'HE', 'SHE', 'CAN', 'SEE', 'THE',
+      'AND', 'YOU', 'ARE', 'NOT', 'BUT', 'WAS', 'HIS', 'HER', 'HIM'
+    ],
+    normal: [
+      'HOUSE', 'WATER', 'LIGHT', 'WORLD', 'MUSIC', 'DANCE', 'SMILE', 'DREAM',
+      'STORY', 'PEACE', 'HAPPY', 'FRIEND', 'FAMILY', 'NATURE', 'FLOWER',
+      'MOUNTAIN', 'OCEAN', 'FOREST', 'ANIMAL', 'PLANET', 'FUTURE', 'MEMORY',
+      'JOURNEY', 'FREEDOM', 'COURAGE', 'WISDOM', 'BEAUTY', 'ENERGY', 'WONDER'
+    ],
+    hard: [
+      'TECHNOLOGY', 'DEVELOPMENT', 'PROGRAMMING', 'ALGORITHM', 'ARCHITECTURE',
+      'PSYCHOLOGY', 'PHILOSOPHY', 'COMMUNICATION', 'INTERNATIONAL', 'ORGANIZATION',
+      'RESPONSIBILITY', 'UNDERSTANDING', 'OPPORTUNITIES', 'ACHIEVEMENTS', 'IMAGINATION',
+      'EXTRAORDINARY', 'PROFESSIONAL', 'TRANSFORMATION', 'COLLABORATION', 'INVESTIGATION',
+      'DETERMINATION', 'CONCENTRATION', 'REPRESENTATION', 'ADMINISTRATION', 'CONFIGURATION'
+    ],
+    expert: [
+      'IMPLEMENTATION', 'SYNCHRONIZATION', 'AUTHENTICATION', 'OPTIMIZATION',
+      'CHARACTERISTICS', 'RESPONSIBILITIES', 'RECOMMENDATIONS', 'SPECIFICATIONS',
+      'INFRASTRUCTURE', 'DOCUMENTATION', 'INTERNATIONALIZATION', 'TROUBLESHOOTING',
+      'ACKNOWLEDGMENT', 'ACCOMPLISHMENT', 'COMPREHENSIVE', 'UNPRECEDENTED',
+      'REVOLUTIONARY', 'EXTRAORDINARY', 'SOPHISTICATED', 'BREAKTHROUGH'
+    ]
+  }
 };
 
-export const getRandomWord = (difficulty: keyof typeof wordLists): string => {
-  const words = wordLists[difficulty];
+export const getRandomWord = (difficulty: keyof typeof wordLists.fr, language: Language = 'fr'): string => {
+  const words = wordLists[language][difficulty];
   return words[Math.floor(Math.random() * words.length)];
 };
 

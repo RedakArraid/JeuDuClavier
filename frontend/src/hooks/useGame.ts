@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FallingWord, DifficultyLevel, GameConfig } from '../types/game';
 import { getRandomWord, reverseWord } from '../data/words';
+import { Language } from '../i18n/translations';
 
 const GAME_CONFIG: Record<DifficultyLevel, GameConfig> = {
   easy: { wordSpeed: 0.3, spawnRate: 0, maxWords: 1, reverseWords: false },
@@ -25,7 +26,7 @@ const calculateWordSpeed = (difficulty: DifficultyLevel, wordsTyped: number): nu
   return baseSpeed + (speedIncrements * progression.increment);
 };
 
-export const useGame = () => {
+export const useGame = (language: Language = 'fr') => {
   const [gameState, setGameState] = useState<GameState>({
     isPlaying: false,
     isPaused: false,
@@ -54,7 +55,7 @@ export const useGame = () => {
 
   const createFallingWord = useCallback((difficulty: DifficultyLevel, wordsTyped: number = 0): FallingWord => {
     const config = GAME_CONFIG[difficulty];
-    let word = getRandomWord(difficulty);
+    let word = getRandomWord(difficulty, language);
     
     // Pour le mode expert, on garde le mot normal (pas inversé)
     // La logique d'inversion sera gérée dans la saisie
@@ -75,7 +76,7 @@ export const useGame = () => {
       isComplete: false,
       isActive: true
     };
-  }, []);
+  }, [language]);
 
   const updateWordPositions = useCallback(() => {
     setGameState(prev => {
