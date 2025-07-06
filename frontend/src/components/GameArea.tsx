@@ -8,6 +8,7 @@ interface GameAreaProps {
   onKeyPress: (key: string) => void;
   onBackspace: () => void;
   onTogglePause: () => void;
+  onReturnToMenu: () => void;
   isPlaying: boolean;
   isPaused: boolean;
   difficulty: DifficultyLevel;
@@ -19,6 +20,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
   onKeyPress,
   onBackspace,
   onTogglePause,
+  onReturnToMenu,
   isPlaying,
   isPaused,
   difficulty
@@ -55,6 +57,12 @@ export const GameArea: React.FC<GameAreaProps> = ({
       // La pause fonctionne toujours
       if (e.key === ' ' || e.key === 'Escape') {
         onTogglePause();
+        return;
+      }
+      
+      // Retour au menu en mode pause
+      if (isPaused && (e.key === 'm' || e.key === 'M')) {
+        onReturnToMenu();
         return;
       }
       
@@ -98,7 +106,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
         gameAreaRef.current.removeEventListener('click', handleClick);
       }
     };
-  }, [isPlaying, isPaused, onKeyPress, onBackspace, onTogglePause]);
+  }, [isPlaying, isPaused, onKeyPress, onBackspace, onTogglePause, onReturnToMenu]);
 
   // Focus automatique quand le jeu commence/reprend
   useEffect(() => {
@@ -143,11 +151,38 @@ export const GameArea: React.FC<GameAreaProps> = ({
         {/* Overlay de pause */}
         {isPaused && (
           <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-20 rounded-xl">
-            <div className="text-center text-white">
+            <div className="text-center text-white max-w-md">
               <div className="text-4xl mb-4">⏸️</div>
-              <div className="text-2xl font-bold mb-2">PAUSE</div>
-              <div className="text-sm opacity-80">
-                Espace ou ESC pour reprendre
+              <div className="text-2xl font-bold mb-4">PAUSE</div>
+              
+              <div className="space-y-3 text-sm opacity-90">
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="bg-gray-700 px-2 py-1 rounded text-xs font-mono">SPACE</span>
+                  <span>ou</span>
+                  <span className="bg-gray-700 px-2 py-1 rounded text-xs font-mono">ESC</span>
+                  <span>pour reprendre</span>
+                </div>
+                
+                <div className="flex items-center justify-center space-x-2">
+                  <span className="bg-gray-700 px-2 py-1 rounded text-xs font-mono">M</span>
+                  <span>pour retourner au menu principal</span>
+                </div>
+              </div>
+              
+              {/* Boutons cliquables */}
+              <div className="flex justify-center space-x-4 mt-6">
+                <button
+                  onClick={onTogglePause}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  ▶️ Reprendre
+                </button>
+                <button
+                  onClick={onReturnToMenu}
+                  className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors"
+                >
+                  🏠 Menu
+                </button>
               </div>
             </div>
           </div>

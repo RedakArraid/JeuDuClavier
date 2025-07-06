@@ -25,6 +25,10 @@ function App() {
     resetGame();
   };
 
+  const handleReturnToMenu = () => {
+    resetGame();
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 relative overflow-hidden">
       {/* Layout principal avec jeu centré */}
@@ -38,6 +42,7 @@ function App() {
             onKeyPress={handleKeyPress}
             onBackspace={handleBackspace}
             onTogglePause={pauseGame}
+            onReturnToMenu={handleReturnToMenu}
             isPlaying={gameState.isPlaying}
             isPaused={gameState.isPaused}
             difficulty={gameState.difficulty}
@@ -56,7 +61,7 @@ function App() {
       </div>
 
       {/* Game Menu - overlay */}
-      {(!gameState.isPlaying || gameState.isPaused) && !gameState.isGameOver && (
+      {(!gameState.isPlaying && !gameState.isPaused) && !gameState.isGameOver && (
         <GameMenu
           isPlaying={gameState.isPlaying}
           isPaused={gameState.isPaused}
@@ -84,6 +89,9 @@ function App() {
             <span>⌨️ Tapez directement</span>
             <span>⌫ Backspace pour corriger</span>
             <span>ESC pour pause</span>
+            {gameState.difficulty === 'expert' && (
+              <span className="text-purple-300">⬅ Mode expert: droite à gauche</span>
+            )}
           </div>
         </div>
       )}
