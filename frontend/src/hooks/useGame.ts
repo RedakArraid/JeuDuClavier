@@ -3,10 +3,26 @@ import { GameState, FallingWord, DifficultyLevel, GameConfig } from '../types/ga
 import { getRandomWord, reverseWord } from '../data/words';
 
 const GAME_CONFIG: Record<DifficultyLevel, GameConfig> = {
-  easy: { wordSpeed: 0.6, spawnRate: 0, maxWords: 1, reverseWords: false },
-  normal: { wordSpeed: 0.8, spawnRate: 0, maxWords: 1, reverseWords: false },
-  hard: { wordSpeed: 1.0, spawnRate: 0, maxWords: 1, reverseWords: false },
-  expert: { wordSpeed: 1.2, spawnRate: 0, maxWords: 1, reverseWords: true }
+  easy: { wordSpeed: 0.3, spawnRate: 0, maxWords: 1, reverseWords: false },
+  normal: { wordSpeed: 0.3, spawnRate: 0, maxWords: 1, reverseWords: false },
+  hard: { wordSpeed: 0.3, spawnRate: 0, maxWords: 1, reverseWords: false },
+  expert: { wordSpeed: 0.3, spawnRate: 0, maxWords: 1, reverseWords: true }
+};
+
+// Configuration de l'augmentation de vitesse par difficulté
+const SPEED_PROGRESSION: Record<DifficultyLevel, { interval: number; increment: number }> = {
+  easy: { interval: 10, increment: 0.1 },    // +0.1 chaque 10 mots
+  normal: { interval: 5, increment: 0.1 },   // +0.1 chaque 5 mots
+  hard: { interval: 5, increment: 0.1 },     // +0.1 chaque 5 mots
+  expert: { interval: 10, increment: 0.1 }   // +0.1 chaque 10 mots
+};
+
+// Fonction pour calculer la vitesse actuelle basée sur les mots tapés
+const calculateWordSpeed = (difficulty: DifficultyLevel, wordsTyped: number): number => {
+  const baseSpeed = GAME_CONFIG[difficulty].wordSpeed;
+  const progression = SPEED_PROGRESSION[difficulty];
+  const speedIncrements = Math.floor(wordsTyped / progression.interval);
+  return baseSpeed + (speedIncrements * progression.increment);
 };
 
 export const useGame = () => {
@@ -22,7 +38,8 @@ export const useGame = () => {
       level: 1,
       wordsTyped: 0,
       errorsCount: 0,
-      timeElapsed: 0
+      timeElapsed: 0,
+      currentSpeed: 0.3
     },
     fallingWords: [],
     currentInput: '',
@@ -35,7 +52,7 @@ export const useGame = () => {
   const currentTypedRef = useRef<string>('');
   const shouldSpawnRef = useRef<boolean>(false);
 
-  const createFallingWord = useCallback((difficulty: DifficultyLevel): FallingWord => {
+  const createFallingWord = useCallback((difficulty: DifficultyLevel, wordsTyped: number = 0): FallingWord => {
     const config = GAME_CONFIG[difficulty];
     let word = getRandomWord(difficulty);
     
@@ -46,12 +63,15 @@ export const useGame = () => {
     originalWordRef.current = word;
     currentTypedRef.current = '';
 
+    // Calculer la vitesse basée sur le nombre de mots tapés
+    const currentSpeed = calculateWordSpeed(difficulty, wordsTyped);
+
     return {
       id: Math.random().toString(36).substring(2, 11),
       text: word,
       x: 50,
       y: 3,
-      speed: config.wordSpeed,
+      speed: currentSpeed,
       typed: '',
       isComplete: false,
       isActive: true
@@ -139,6 +159,9 @@ export const useGame = () => {
           if (currentWord.y < 30) bonus = 50;
           else if (currentWord.y < 60) bonus = 25;
           
+          // Calculer la nouvelle vitesse pour le prochain mot
+          const currentSpeed = calculateWordSpeed(prev.difficulty, wordsTyped);
+          
           return {
             ...prev,
             fallingWords: [],
@@ -150,7 +173,8 @@ export const useGame = () => {
               wpm,
               accuracy: 100,
               level: Math.floor(wordsTyped / 10) + 1,
-              timeElapsed: Math.round(timeElapsed)
+              timeElapsed: Math.round(timeElapsed),
+              currentSpeed
             }
           };
         });
@@ -227,7 +251,8 @@ export const useGame = () => {
         return prev;
       }
       
-      const newWord = createFallingWord(prev.difficulty);
+      // Passer le nombre de mots tapés pour calculer la vitesse
+      const newWord = createFallingWord(prev.difficulty, prev.stats.wordsTyped);
       shouldSpawnRef.current = false;
       
       return {
@@ -264,7 +289,8 @@ export const useGame = () => {
         level: 1,
         wordsTyped: 0,
         errorsCount: 0,
-        timeElapsed: 0
+        timeElapsed: 0,
+        currentSpeed: 0.3
       }
     });
   }, []);
@@ -312,7 +338,8 @@ export const useGame = () => {
         level: 1,
         wordsTyped: 0,
         errorsCount: 0,
-        timeElapsed: 0
+        timeElapsed: 0,
+        currentSpeed: 0.3
       }
     }));
   }, []);

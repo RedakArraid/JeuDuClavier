@@ -1,6 +1,6 @@
 import React from 'react';
 import { GameStats as GameStatsType } from '../types/game';
-import { Trophy, Target, Clock, TrendingUp } from 'lucide-react';
+import { Trophy, Target, Clock, TrendingUp, Zap } from 'lucide-react';
 
 interface GameStatsProps {
   stats: GameStatsType;
@@ -14,7 +14,8 @@ export const GameStats: React.FC<GameStatsProps> = ({ stats, isVisible = true })
     { icon: Trophy, label: 'Score', value: stats.score.toLocaleString(), color: 'text-yellow-400' },
     { icon: TrendingUp, label: 'WPM', value: stats.wpm.toString(), color: 'text-blue-400' },
     { icon: Target, label: 'Accuracy', value: `${stats.accuracy}%`, color: 'text-green-400' },
-    { icon: Clock, label: 'Time', value: `${stats.timeElapsed}s`, color: 'text-purple-400' }
+    { icon: Clock, label: 'Time', value: `${stats.timeElapsed}s`, color: 'text-purple-400' },
+    { icon: Zap, label: 'Speed', value: stats.currentSpeed.toFixed(1), color: 'text-orange-400' }
   ];
 
   return (
@@ -24,14 +25,28 @@ export const GameStats: React.FC<GameStatsProps> = ({ stats, isVisible = true })
         <div className="text-sm text-gray-400">{stats.wordsTyped} words typed</div>
       </div>
       
-      <div className="grid grid-cols-2 gap-3">
-        {statItems.map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="flex flex-col items-center">
-            <Icon className={`h-5 w-5 ${color} mb-1`} />
-            <div className="text-xs text-gray-400">{label}</div>
-            <div className={`text-sm font-bold ${color}`}>{value}</div>
-          </div>
-        ))}
+      <div className="space-y-2">
+        {/* Première ligne - Score et WPM */}
+        <div className="grid grid-cols-2 gap-3">
+          {statItems.slice(0, 2).map(({ icon: Icon, label, value, color }) => (
+            <div key={label} className="flex flex-col items-center">
+              <Icon className={`h-5 w-5 ${color} mb-1`} />
+              <div className="text-xs text-gray-400">{label}</div>
+              <div className={`text-sm font-bold ${color}`}>{value}</div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Deuxième ligne - Accuracy, Time, Speed */}
+        <div className="grid grid-cols-3 gap-2">
+          {statItems.slice(2).map(({ icon: Icon, label, value, color }) => (
+            <div key={label} className="flex flex-col items-center">
+              <Icon className={`h-4 w-4 ${color} mb-1`} />
+              <div className="text-xs text-gray-400">{label}</div>
+              <div className={`text-xs font-bold ${color}`}>{value}</div>
+            </div>
+          ))}
+        </div>
       </div>
       
       {stats.errorsCount > 0 && (

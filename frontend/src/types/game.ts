@@ -6,6 +6,7 @@ export interface GameStats {
   wordsTyped: number;
   errorsCount: number;
   timeElapsed: number;
+  currentSpeed: number;
 }
 
 export interface FallingWord {
