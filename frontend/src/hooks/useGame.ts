@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FallingWord, DifficultyLevel, GameConfig } from '../types/game';
 import { getRandomWord, reverseWord } from '../data/words';
 
-// Configuration adaptée à la nouvelle hauteur du cadre (85vh au lieu de 70vh)
 const GAME_CONFIG: Record<DifficultyLevel, GameConfig> = {
   easy: { wordSpeed: 0.6, spawnRate: 0, maxWords: 1, reverseWords: false },
   normal: { wordSpeed: 0.8, spawnRate: 0, maxWords: 1, reverseWords: false },
@@ -33,6 +32,7 @@ export const useGame = () => {
 
   const gameLoopRef = useRef<number>();
   const originalWordRef = useRef<string>('');
+  const currentTypedRef = useRef<string>('');
   const shouldSpawnRef = useRef<boolean>(false);
 
   const createFallingWord = useCallback((difficulty: DifficultyLevel): FallingWord => {
@@ -43,15 +43,15 @@ export const useGame = () => {
       word = reverseWord(word);
     }
 
-    // Sauvegarder le mot original
     originalWordRef.current = word;
-    console.log('🎯 Création du mot:', word, 'Vitesse:', config.wordSpeed, '(Cadre étendu)');
+    currentTypedRef.current = '';
+    console.log('🎯 Création nouveau mot:', word, 'Difficulté:', difficulty);
 
     return {
       id: Math.random().toString(36).substring(2, 11),
       text: word,
-      x: 50, // Position centrée fixe
-      y: 3, // Position plus haute dans le cadre étendu
+      x: 50,
+      y: 3,
       speed: config.wordSpeed,
       typed: '',
       isComplete: false,
@@ -67,11 +67,9 @@ export const useGame = () => {
       const currentWord = prev.fallingWords[0];
       const newY = currentWord.y + currentWord.speed;
       
-      console.log(`📍 Mot "${currentWord.text}" - Position: y=${currentWord.y.toFixed(1)} → y=${newY.toFixed(1)} (cadre étendu)`);
-      
-      // Seuil de Game Over adapté au cadre plus haut (92% au lieu de 85%)
+      // Game Over si le mot tombe trop bas
       if (newY > 92) {
-        console.log('💀 GAME OVER - Mot sorti du cadre étendu:', currentWord.text, 'à y=', newY.toFixed(1));
+        console.log('💀 GAME OVER - Mot tombé trop bas:', currentWord.text, 'Y:', newY);
         return {
           ...prev,
           isPlaying: false,
@@ -84,7 +82,6 @@ export const useGame = () => {
         };
       }
       
-      // Mettre à jour la position
       const updatedWords = [{
         ...currentWord,
         y: newY
@@ -105,33 +102,45 @@ export const useGame = () => {
     });
   }, []);
 
-  const handleInput = useCallback((input: string) => {
-    console.log('🔤 Saisie reçue:', input);
+  // Gestion d'une touche pressée - VERSION TOTALEMENT CORRIGÉE
+  const handleKeyPress = useCallback((key: string) => {
+    console.log('⌨️ handleKeyPress appelé avec:', key);
+    console.log('📊 currentTypedRef avant:', currentTypedRef.current);
     
-    setGameState(prev => {
-      if (prev.fallingWords.length === 0) {
-        console.log('❌ Pas de mot actuel');
-        return { ...prev, currentInput: input };
-      }
+    // Vérifications préliminaires
+    if (gameState.fallingWords.length === 0) {
+      console.log('❌ Pas de mot actuel à taper');
+      return;
+    }
+    
+    const originalWord = originalWordRef.current;
+    const currentTyped = currentTypedRef.current;
+    const newTyped = currentTyped + key;
+    
+    console.log(`🎯 Test: "${newTyped}" vs mot original "${originalWord}"`);
+    console.log(`📝 Tapé jusqu'ici: "${currentTyped}" + "${key}" = "${newTyped}"`);
+    
+    // Vérifier si la nouvelle saisie correspond au début du mot
+    if (originalWord.toLowerCase().startsWith(newTyped.toLowerCase())) {
+      console.log('✅ Lettre CORRECTE!');
       
-      const currentWord = prev.fallingWords[0];
-      const originalWord = originalWordRef.current;
+      // Mettre à jour la ref IMMÉDIATEMENT
+      currentTypedRef.current = newTyped;
+      const remainingText = originalWord.substring(newTyped.length);
       
-      console.log(`🎯 Vérification: saisie="${input}" vs mot="${currentWord.text}" (position y=${currentWord.y.toFixed(1)})`);
+      console.log(`📝 Reste à taper: "${remainingText}"`);
+      console.log('📊 currentTypedRef après update:', currentTypedRef.current);
       
-      // Vérifier si la saisie correspond exactement aux premières lettres du mot restant
-      if (currentWord.text.toLowerCase().startsWith(input.toLowerCase())) {
-        console.log('✅ Saisie correcte!');
+      // Mot complètement tapé
+      if (remainingText === '') {
+        console.log('🎉 MOT COMPLÉTÉ!', originalWord);
         
-        // Calculer la partie restante
-        const remainingText = currentWord.text.substring(input.length);
-        console.log(`📝 Reste à taper: "${remainingText}"`);
+        // Reset pour le prochain mot
+        currentTypedRef.current = '';
+        originalWordRef.current = '';
+        shouldSpawnRef.current = true;
         
-        // Mot complètement tapé
-        if (remainingText === '') {
-          console.log('🎉 Mot complété:', originalWord, 'à la position y=', currentWord.y.toFixed(1));
-          
-          // Calculer les stats
+        setGameState(prev => {
           const timeElapsed = prev.gameStartTime > 0 
             ? (Date.now() - prev.gameStartTime) / 1000
             : 1;
@@ -139,19 +148,17 @@ export const useGame = () => {
           const wordsTyped = prev.stats.wordsTyped + 1;
           const wpm = timeElapsed > 0 ? Math.round((wordsTyped / timeElapsed) * 60) : 0;
           
-          // Bonus si complété tôt dans le cadre étendu
+          // Bonus de position
+          const currentWord = prev.fallingWords[0];
           let bonus = 0;
-          if (currentWord.y < 30) bonus = 50; // Bonus haut du cadre
-          else if (currentWord.y < 60) bonus = 25; // Bonus milieu du cadre
+          if (currentWord.y < 30) bonus = 50;
+          else if (currentWord.y < 60) bonus = 25;
           
-          console.log('🎁 Bonus position:', bonus, 'points (y=', currentWord.y.toFixed(1), ')');
-          
-          // Marquer qu'il faut spawner un nouveau mot
-          shouldSpawnRef.current = true;
+          console.log('🎁 Bonus position:', bonus, 'points (Y:', currentWord.y.toFixed(1), ')');
           
           return {
             ...prev,
-            fallingWords: [], // Supprimer le mot complété
+            fallingWords: [],
             currentInput: '',
             stats: {
               ...prev.stats,
@@ -163,40 +170,100 @@ export const useGame = () => {
               timeElapsed: Math.round(timeElapsed)
             }
           };
-        }
-        
-        // Mettre à jour le mot avec la partie restante
-        const updatedWord = {
-          ...currentWord,
-          text: remainingText,
-          typed: input
-        };
-        
-        return {
-          ...prev,
-          fallingWords: [updatedWord],
-          currentInput: input
-        };
+        });
       } else {
-        // Saisie incorrecte - on garde juste l'input pour l'affichage
-        console.log('❌ Saisie incorrecte');
-        return {
-          ...prev,
-          currentInput: input
-        };
+        // Mettre à jour le mot avec la partie restante
+        setGameState(prev => {
+          const currentWord = prev.fallingWords[0];
+          const updatedWord = {
+            ...currentWord,
+            text: remainingText,
+            typed: newTyped
+          };
+          
+          console.log('📋 Mot mis à jour - Affiché:', remainingText, 'Tapé:', newTyped);
+          
+          return {
+            ...prev,
+            fallingWords: [updatedWord],
+            currentInput: newTyped
+          };
+        });
       }
+    } else {
+      // Lettre incorrecte
+      console.log('❌ Lettre INCORRECTE!');
+      console.log(`   Attendu: "${originalWord[newTyped.length - 1]}" (position ${newTyped.length - 1})`);
+      console.log(`   Reçu: "${key}"`);
+      console.log(`   Mot attendu: "${originalWord}"`);
+      
+      setGameState(prev => ({
+        ...prev,
+        stats: {
+          ...prev.stats,
+          errorsCount: prev.stats.errorsCount + 1,
+          accuracy: Math.round(((prev.stats.wordsTyped * 5) / Math.max(1, prev.stats.wordsTyped * 5 + prev.stats.errorsCount + 1)) * 100)
+        }
+      }));
+    }
+  }, [gameState.fallingWords.length]); // Ajouter dépendance pour accéder à l'état actuel
+
+  // Gestion de la touche Backspace - VERSION CORRIGÉE
+  const handleBackspace = useCallback(() => {
+    console.log('⌫ handleBackspace appelé');
+    console.log('📊 Tapé actuellement:', currentTypedRef.current);
+    
+    setGameState(prev => {
+      if (prev.fallingWords.length === 0 || currentTypedRef.current === '') {
+        console.log('❌ Rien à effacer (pas de mot ou rien tapé)');
+        return prev;
+      }
+      
+      // Retirer la dernière lettre tapée
+      const newTyped = currentTypedRef.current.slice(0, -1);
+      currentTypedRef.current = newTyped;
+      
+      const originalWord = originalWordRef.current;
+      const remainingText = originalWord.substring(newTyped.length);
+      
+      // Mettre à jour le mot affiché
+      const currentWord = prev.fallingWords[0];
+      const updatedWord = {
+        ...currentWord,
+        text: remainingText,
+        typed: newTyped
+      };
+      
+      console.log(`🔙 Après backspace: tapé="${newTyped}", mot affiché="${remainingText}"`);
+      
+      return {
+        ...prev,
+        fallingWords: [updatedWord],
+        currentInput: newTyped
+      };
     });
   }, []);
 
   const spawnNextWord = useCallback(() => {
-    if (!shouldSpawnRef.current) return;
+    if (!shouldSpawnRef.current) {
+      console.log('🚫 Spawn bloqué - shouldSpawn:', shouldSpawnRef.current);
+      return;
+    }
+    
+    console.log('🆕 Tentative de spawn d\'un nouveau mot...');
     
     setGameState(prev => {
-      if (!prev.isPlaying || prev.isPaused) return prev;
-      if (prev.fallingWords.length > 0) return prev; // Déjà un mot
+      if (!prev.isPlaying || prev.isPaused) {
+        console.log('🚫 Spawn annulé - Jeu pas actif');
+        return prev;
+      }
+      if (prev.fallingWords.length > 0) {
+        console.log('🚫 Spawn annulé - Il y a déjà un mot');
+        return prev;
+      }
       
       const newWord = createFallingWord(prev.difficulty);
-      console.log('🆕 Nouveau mot spawné dans cadre étendu:', newWord.text, 'vitesse:', newWord.speed, 'position y:', newWord.y);
+      console.log('✅ Nouveau mot spawné avec succès:', newWord.text);
       shouldSpawnRef.current = false;
       
       return {
@@ -208,14 +275,19 @@ export const useGame = () => {
   }, [createFallingWord]);
 
   const startGame = useCallback((difficulty: DifficultyLevel) => {
-    console.log('🚀 Démarrage - Cadre étendu (85vh) - Difficulté:', difficulty, 'Vitesse:', GAME_CONFIG[difficulty].wordSpeed);
+    console.log('🚀 DÉMARRAGE DU JEU - Mode Clavier Direct');
+    console.log('📊 Difficulté:', difficulty, 'Config:', GAME_CONFIG[difficulty]);
     
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
     }
     
+    // Reset complet
     originalWordRef.current = '';
-    shouldSpawnRef.current = true; // Marquer pour spawner le premier mot
+    currentTypedRef.current = '';
+    shouldSpawnRef.current = true;
+    
+    console.log('✅ Reset effectué - Premier mot sera spawné');
     
     setGameState({
       isPlaying: true,
@@ -239,14 +311,17 @@ export const useGame = () => {
   }, []);
 
   const pauseGame = useCallback(() => {
+    console.log('⏸️ Pause/Reprendre jeu');
     setGameState(prev => ({ ...prev, isPaused: !prev.isPaused }));
   }, []);
 
   const stopGame = useCallback(() => {
+    console.log('⏹️ Arrêt du jeu');
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
     }
     shouldSpawnRef.current = false;
+    currentTypedRef.current = '';
     
     setGameState(prev => ({
       ...prev,
@@ -257,11 +332,13 @@ export const useGame = () => {
   }, []);
 
   const resetGame = useCallback(() => {
+    console.log('🔄 Reset du jeu');
     if (gameLoopRef.current) {
       cancelAnimationFrame(gameLoopRef.current);
     }
     
     originalWordRef.current = '';
+    currentTypedRef.current = '';
     shouldSpawnRef.current = false;
     
     setGameState(prev => ({
@@ -304,16 +381,31 @@ export const useGame = () => {
     };
   }, [gameState.isPlaying, gameState.isPaused, updateWordPositions]);
 
-  // Effet pour spawner des mots quand nécessaire
+  // Spawner des mots quand nécessaire
   useEffect(() => {
     if (gameState.isPlaying && !gameState.isPaused && shouldSpawnRef.current) {
+      console.log('⏰ Timer pour spawner un mot dans 1 seconde...');
       const timer = setTimeout(() => {
         spawnNextWord();
-      }, 1000); // Délai légèrement plus long pour profiter du cadre étendu
+      }, 1000);
       
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('⏰ Timer de spawn annulé');
+        clearTimeout(timer);
+      };
     }
   }, [gameState.isPlaying, gameState.isPaused, gameState.fallingWords.length, spawnNextWord]);
+
+  // Log des changements d'état pour debug
+  useEffect(() => {
+    console.log('📊 État du jeu mis à jour:', {
+      isPlaying: gameState.isPlaying,
+      isPaused: gameState.isPaused,
+      isGameOver: gameState.isGameOver,
+      wordsCount: gameState.fallingWords.length,
+      currentInput: gameState.currentInput
+    });
+  }, [gameState.isPlaying, gameState.isPaused, gameState.isGameOver, gameState.fallingWords.length, gameState.currentInput]);
 
   return {
     gameState,
@@ -321,6 +413,7 @@ export const useGame = () => {
     pauseGame,
     stopGame,
     resetGame,
-    handleInput
+    handleKeyPress,
+    handleBackspace
   };
 };

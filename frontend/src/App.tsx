@@ -12,7 +12,8 @@ function App() {
     pauseGame, 
     stopGame, 
     resetGame, 
-    handleInput 
+    handleKeyPress,
+    handleBackspace
   } = useGame();
 
   const handleRestart = () => {
@@ -26,11 +27,12 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 relative overflow-hidden">
-      {/* Game Area - occuppe tout l'écran */}
+      {/* Game Area - mode clavier direct */}
       <GameArea
         fallingWords={gameState.fallingWords}
         currentInput={gameState.currentInput}
-        onInputChange={handleInput}
+        onKeyPress={handleKeyPress}
+        onBackspace={handleBackspace}
         isPlaying={gameState.isPlaying && !gameState.isPaused}
       />
 
@@ -60,6 +62,17 @@ function App() {
           onRestart={handleRestart}
           onNewGame={handleNewGame}
         />
+      )}
+
+      {/* Instructions globales pour le clavier direct */}
+      {gameState.isPlaying && !gameState.isPaused && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm z-10">
+          <div className="flex items-center space-x-4">
+            <span>⌨️ Tapez directement</span>
+            <span>⌫ Backspace pour corriger</span>
+            <span>ESC pour pause</span>
+          </div>
+        </div>
       )}
     </div>
   );

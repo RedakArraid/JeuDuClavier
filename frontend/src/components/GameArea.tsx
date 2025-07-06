@@ -1,30 +1,120 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FallingWord } from './FallingWord';
-import { GameInput } from './GameInput';
 import { FallingWord as FallingWordType } from '../types/game';
 
 interface GameAreaProps {
   fallingWords: FallingWordType[];
   currentInput: string;
-  onInputChange: (value: string) => void;
+  onKeyPress: (key: string) => void;
+  onBackspace: () => void;
   isPlaying: boolean;
 }
 
 export const GameArea: React.FC<GameAreaProps> = ({
   fallingWords,
   currentInput,
-  onInputChange,
+  onKeyPress,
+  onBackspace,
   isPlaying
 }) => {
+  const gameAreaRef = useRef<HTMLDivElement>(null);
+
+  // Gestion des événements clavier - VERSION ANTI-DOUBLE ROBUSTE
+  useEffect(() => {
+    if (!isPlaying) return;
+
+    let lastKeyTime = 0;
+    let lastKey = '';
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const now = Date.now();
+      
+      // Empêcher les appels doubles (même touche dans les 100ms)
+      if (e.key === lastKey && now - lastKeyTime < 100) {
+        console.log('🚫 Appel dupliqué ignoré pour:', e.key);
+        return;
+      }
+      
+      lastKey = e.key;
+      lastKeyTime = now;
+      
+      // Log pour debug
+      console.log('🎹 Touche détectée:', e.key, 'isPlaying:', isPlaying);
+      
+      // Ne pas empêcher F12, F5, etc.
+      if (e.key === 'F12' || e.key === 'F5' || e.ctrlKey || e.altKey || e.metaKey) {
+        return; // Laisser passer les touches système
+      }
+
+      // Empêcher les actions par défaut pour les autres touches
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (e.key === 'Backspace') {
+        console.log('⌫ Backspace détecté');
+        onBackspace();
+      } else if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
+        console.log('✅ Lettre détectée:', e.key);
+        onKeyPress(e.key.toLowerCase());
+      }
+    };
+
+    // Assurer le focus sur la zone de jeu
+    const focusGameArea = () => {
+      if (gameAreaRef.current) {
+        gameAreaRef.current.focus();
+        console.log('🎯 Focus mis sur la zone de jeu');
+      }
+    };
+
+    // Focus initial
+    focusGameArea();
+
+    // Ajouter l'écouteur sur document pour capturer tous les événements
+    document.addEventListener('keydown', handleKeyDown, true);
+    
+    // Focus sur clic
+    const handleClick = () => {
+      focusGameArea();
+    };
+    
+    if (gameAreaRef.current) {
+      gameAreaRef.current.addEventListener('click', handleClick);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown, true);
+      if (gameAreaRef.current) {
+        gameAreaRef.current.removeEventListener('click', handleClick);
+      }
+    };
+  }, [isPlaying, onKeyPress, onBackspace]);
+
+  // Focus automatique quand le jeu commence/reprend
+  useEffect(() => {
+    if (isPlaying && gameAreaRef.current) {
+      setTimeout(() => {
+        gameAreaRef.current?.focus();
+        console.log('🎯 Focus automatique appliqué');
+      }, 100);
+    }
+  }, [isPlaying]);
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      {/* Cadre de jeu - HAUTEUR AUGMENTÉE */}
-      <div className="relative w-full max-w-md h-[85vh] bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900 rounded-xl border-2 border-blue-500/50 shadow-2xl overflow-hidden">
+      {/* Cadre de jeu avec focus pour capturer les événements clavier */}
+      <div 
+        ref={gameAreaRef}
+        tabIndex={0} // Permet de recevoir le focus
+        className="relative w-full max-w-md h-[85vh] bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900 rounded-xl border-2 border-blue-500/50 shadow-2xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-green-400"
+        onFocus={() => console.log('🎯 Zone de jeu a reçu le focus')}
+        onBlur={() => console.log('❌ Zone de jeu a perdu le focus')}
+      >
         
         {/* Zone de jeu délimitée */}
         <div className="absolute inset-4 border border-gray-500/30 rounded-lg">
           
-          {/* Ligne de danger (bas du cadre) - ajustée pour la nouvelle hauteur */}
+          {/* Ligne de danger (bas du cadre) */}
           <div className="absolute bottom-20 left-0 right-0 h-0.5 bg-red-400 opacity-70 animate-pulse"></div>
           
           {/* Ligne de milieu pour référence */}
@@ -37,56 +127,81 @@ export const GameArea: React.FC<GameAreaProps> = ({
           
           {/* Indication si aucun mot */}
           {fallingWords.length === 0 && isPlaying && (
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/50 text-lg">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white/50 text-lg animate-pulse">
               Prochain mot...
             </div>
           )}
         </div>
 
-        {/* Zone de saisie en bas du cadre */}
-        <div className="absolute bottom-4 left-4 right-4">
-          <GameInput
-            value={currentInput}
-            onChange={onInputChange}
-            isActive={isPlaying}
-            placeholder="Tapez le mot qui descend..."
-          />
-        </div>
+        {/* Indicateur de saisie en cours */}
+        {isPlaying && currentInput && (
+          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 z-10">
+            <div className="bg-black/80 text-white px-4 py-2 rounded-lg text-lg font-mono border border-green-400/50">
+              <span className="text-green-400">{currentInput}</span>
+              <span className="animate-pulse text-green-400">|</span>
+            </div>
+          </div>
+        )}
+
+        {/* Instructions de jeu - plus visibles */}
+        {isPlaying && (
+          <div className="absolute top-2 right-2 text-xs text-white/90 text-right leading-tight bg-black/50 p-2 rounded">
+            <div>🎯 Tapez directement</div>
+            <div>⌫ Backspace pour effacer</div>
+            <div>📝 Lettres A-Z uniquement</div>
+          </div>
+        )}
+
+        {/* Indicateur de focus avec statut plus détaillé */}
+        {isPlaying && (
+          <div className="absolute top-2 left-2 flex items-center space-x-2 text-xs text-white/90 bg-black/50 p-2 rounded">
+            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            <div>
+              <div>Clavier actif</div>
+              <div className="text-green-400">Mode Direct</div>
+            </div>
+          </div>
+        )}
+
+        {/* Message d'aide si pas de mot */}
+        {!isPlaying && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center text-white/70 bg-black/50 p-6 rounded-lg">
+              <div className="text-3xl mb-3">⌨️</div>
+              <div className="text-xl mb-2">Mode Clavier Direct</div>
+              <div className="text-sm mb-2">Cliquez pour activer puis tapez directement</div>
+              <div className="text-xs text-white/50">Pas besoin de zone de texte</div>
+            </div>
+          </div>
+        )}
+
+        {/* Debug info amélioré */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="absolute bottom-2 left-2 bg-black/80 text-white p-2 rounded text-xs border border-yellow-400/50">
+            <div>🎮 Jeu: {isPlaying ? 'Actif' : 'Inactif'}</div>
+            <div>📝 Saisie: "{currentInput}"</div>
+            <div>📊 Mots: {fallingWords.length}</div>
+            {fallingWords.length > 0 && (
+              <>
+                <div>🎯 Mot: "{fallingWords[0].text}"</div>
+                <div>📍 Y: {fallingWords[0].y.toFixed(1)}%</div>
+              </>
+            )}
+            <div className="text-green-400 mt-1">✅ Clavier: {isPlaying ? 'ON' : 'OFF'}</div>
+          </div>
+        )}
 
         {/* Titre du mode */}
         <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-white font-bold text-sm">
-          Mode Séquentiel - Cadre Étendu
+          Mode Clavier Direct - {isPlaying ? 'ACTIF' : 'INACTIF'}
         </div>
 
-        {/* Instructions en mode jeu */}
+        {/* Indicateur de clic pour activer */}
         {isPlaying && (
-          <div className="absolute top-2 right-2 text-xs text-white/70 text-right leading-tight">
-            <div>Tapez lettre par lettre</div>
-            <div>Le mot se réduit</div>
-            <div>Plus de hauteur = plus de temps</div>
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white/60 text-xs animate-pulse">
+            Cliquez ici si le clavier ne répond pas
           </div>
         )}
-
-        {/* Debug info - position ajustée */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="absolute top-2 left-2 bg-black/70 text-white p-2 rounded text-xs">
-            <div>Mots: {fallingWords.length}</div>
-            <div>Jeu: {isPlaying ? 'Actif' : 'Arrêté'}</div>
-            <div>Saisie: "{currentInput}"</div>
-            {fallingWords.length > 0 && (
-              <>
-                <div>Mot: "{fallingWords[0].text}"</div>
-                <div>Y: {fallingWords[0].y.toFixed(1)}%</div>
-              </>
-            )}
-            <div className="mt-1 text-yellow-400">Cadre: 85vh</div>
-          </div>
-        )}
-
-        {/* Indicateur de hauteur - coin bas gauche */}
-        <div className="absolute bottom-2 left-2 text-xs text-white/50">
-          Hauteur étendue
-        </div>
       </div>
     </div>
   );
