@@ -178,11 +178,8 @@ export const useGame = () => {
           const wordsTyped = prev.stats.wordsTyped + 1;
           const wpm = timeElapsed > 0 ? Math.round((wordsTyped / timeElapsed) * 60) : 0;
           
-          // Bonus de position
-          const currentWord = prev.fallingWords[0];
-          let bonus = 0;
-          if (currentWord.y < 30) bonus = 50;
-          else if (currentWord.y < 60) bonus = 25;
+          // Nouveau système de scoring : 1 point par lettre
+          const scoreForWord = originalWord.length; // 1 point par lettre
           
           // Calculer la nouvelle vitesse pour le prochain mot
           const currentSpeed = calculateWordSpeed(prev.difficulty, wordsTyped);
@@ -193,7 +190,7 @@ export const useGame = () => {
             currentInput: '',
             stats: {
               ...prev.stats,
-              score: prev.stats.score + originalWord.length * 10 + bonus,
+              score: prev.stats.score + scoreForWord,
               wordsTyped,
               wpm,
               accuracy: 100,
@@ -233,44 +230,10 @@ export const useGame = () => {
     }
   }, [gameState.fallingWords.length, gameState.difficulty]);
 
-  // Gestion de la touche Backspace
+  // Gestion de la touche Backspace (désactivée)
   const handleBackspace = useCallback(() => {
-    setGameState(prev => {
-      if (prev.fallingWords.length === 0 || currentTypedRef.current === '') {
-        return prev;
-      }
-      
-      // Retirer la dernière lettre tapée
-      const newTyped = currentTypedRef.current.slice(0, -1);
-      currentTypedRef.current = newTyped;
-      
-      const originalWord = originalWordRef.current;
-      const isExpertMode = prev.difficulty === 'expert';
-      
-      // Calculer le texte restant pour l'affichage
-      let remainingText = '';
-      if (isExpertMode) {
-        // En mode expert, on remet les lettres par la droite
-        remainingText = originalWord.substring(0, originalWord.length - newTyped.length);
-      } else {
-        // En mode normal, on remet les lettres par la gauche
-        remainingText = originalWord.substring(newTyped.length);
-      }
-      
-      // Mettre à jour le mot affiché
-      const currentWord = prev.fallingWords[0];
-      const updatedWord = {
-        ...currentWord,
-        text: remainingText,
-        typed: newTyped
-      };
-      
-      return {
-        ...prev,
-        fallingWords: [updatedWord],
-        currentInput: newTyped
-      };
-    });
+    // Fonctionnalité Backspace désactivée
+    return;
   }, []);
 
   const spawnNextWord = useCallback(() => {

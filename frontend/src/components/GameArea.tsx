@@ -71,9 +71,7 @@ export const GameArea: React.FC<GameAreaProps> = ({
         return;
       }
       
-      if (e.key === 'Backspace') {
-        onBackspace();
-      } else if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
+      if (e.key.length === 1 && /^[a-zA-Z]$/.test(e.key)) {
         onKeyPress(e.key.toLowerCase());
       }
     };

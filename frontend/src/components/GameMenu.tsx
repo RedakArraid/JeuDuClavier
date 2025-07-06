@@ -1,6 +1,6 @@
 import React from 'react';
 import { DifficultyLevel } from '../types/game';
-import { Play, Pause, Square, RotateCcw, Trophy, Zap, Target, Star } from 'lucide-react';
+import { Play, Pause, Square, Trophy, Zap, Target, Star } from 'lucide-react';
 
 interface GameMenuProps {
   isPlaying: boolean;
@@ -9,7 +9,6 @@ interface GameMenuProps {
   onStart: (difficulty: DifficultyLevel) => void;
   onPause: () => void;
   onStop: () => void;
-  onReset: () => void;
 }
 
 export const GameMenu: React.FC<GameMenuProps> = ({
@@ -18,8 +17,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({
   difficulty,
   onStart,
   onPause,
-  onStop,
-  onReset
+  onStop
 }) => {
   const difficulties = [
     { id: 'easy' as DifficultyLevel, label: 'Easy', icon: Trophy, color: 'text-green-400', desc: 'Simple words, slow pace' },
@@ -100,17 +98,7 @@ export const GameMenu: React.FC<GameMenuProps> = ({
               </div>
             </div>
 
-            {!isPlaying && (
-              <div className="flex gap-3 justify-center">
-                <button
-                  onClick={onReset}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  Reset
-                </button>
-              </div>
-            )}
+
           </>
         )}
       </div>

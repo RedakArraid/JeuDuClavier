@@ -69,7 +69,6 @@ function App() {
           onStart={startGame}
           onPause={pauseGame}
           onStop={stopGame}
-          onReset={resetGame}
         />
       )}
 
@@ -82,19 +81,7 @@ function App() {
         />
       )}
 
-      {/* Instructions globales pour le clavier direct */}
-      {gameState.isPlaying && !gameState.isPaused && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-black/60 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm z-10">
-          <div className="flex items-center space-x-4">
-            <span>⌨️ Tapez directement</span>
-            <span>⌫ Backspace pour corriger</span>
-            <span>ESC pour pause</span>
-            {gameState.difficulty === 'expert' && (
-              <span className="text-purple-300">⬅ Mode expert: droite à gauche</span>
-            )}
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
