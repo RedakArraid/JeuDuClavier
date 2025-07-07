@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameState, FallingWord, DifficultyLevel, GameConfig } from '../types/game';
 import { reverseWord } from '../data/words';
-import { shuffledWordService } from '../services/shuffledWordService';
+import { randomWordService } from '../services/randomWordService';
 import { Language } from '../i18n/translations';
 import { highScoreService } from '../services/highScoreService';
 import { HighScore } from '../types/highscore';
@@ -13,13 +13,15 @@ const GAME_CONFIG: Record<DifficultyLevel, GameConfig> = {
   expert: { wordSpeed: 0.3, spawnRate: 0, maxWords: 1, reverseWords: true }
 };
 
+// Configuration de l'augmentation de vitesse par difficulté
 const SPEED_PROGRESSION: Record<DifficultyLevel, { interval: number; increment: number }> = {
-  easy: { interval: 10, increment: 0.1 },
-  normal: { interval: 5, increment: 0.1 },
-  hard: { interval: 5, increment: 0.1 },
-  expert: { interval: 10, increment: 0.1 }
+  easy: { interval: 10, increment: 0.1 },    // +0.1 chaque 10 mots
+  normal: { interval: 5, increment: 0.1 },   // +0.1 chaque 5 mots
+  hard: { interval: 5, increment: 0.1 },     // +0.1 chaque 5 mots
+  expert: { interval: 10, increment: 0.1 }   // +0.1 chaque 10 mots
 };
 
+// Fonction pour calculer la vitesse actuelle basée sur les mots tapés
 const calculateWordSpeed = (difficulty: DifficultyLevel, wordsTyped: number): number => {
   const baseSpeed = GAME_CONFIG[difficulty].wordSpeed;
   const progression = SPEED_PROGRESSION[difficulty];
@@ -58,11 +60,13 @@ export const useGame = (language: Language = 'fr') => {
   const currentTypedRef = useRef<string>('');
   const shouldSpawnRef = useRef<boolean>(false);
 
+  // Charger les high scores quand la difficulté ou la langue change
   useEffect(() => {
     const scores = highScoreService.getHighScores(language, gameState.difficulty);
     setHighScores(scores);
   }, [language, gameState.difficulty]);
 
+  // Vérifier si c'est un nouveau high score
   const checkForNewHighScore = useCallback((finalScore: number) => {
     const isNewRecord = highScoreService.isNewHighScore(finalScore, language, gameState.difficulty);
     setIsNewHighScore(isNewRecord);
@@ -71,6 +75,7 @@ export const useGame = (language: Language = 'fr') => {
     }
   }, [language, gameState.difficulty]);
 
+  // Sauvegarder un nouveau high score
   const saveNewHighScore = useCallback((playerName: string, email?: string) => {
     const stats = gameState.stats;
     const newScore = highScoreService.addHighScore(
@@ -85,6 +90,7 @@ export const useGame = (language: Language = 'fr') => {
       email
     );
     
+    // Recharger les high scores
     const updatedScores = highScoreService.getHighScores(language, gameState.difficulty);
     setHighScores(updatedScores);
     setShowNewScoreModal(false);
@@ -94,12 +100,16 @@ export const useGame = (language: Language = 'fr') => {
 
   const createFallingWord = useCallback(async (difficulty: DifficultyLevel, wordsTyped: number = 0): Promise<FallingWord> => {
     const config = GAME_CONFIG[difficulty];
-    // 🎯 Utiliser le service de liste mélangée (ZERO répétition)
-    let word = await shuffledWordService.getNextWord(difficulty, language, Math.floor(wordsTyped / 5) + 1);
+    // Utiliser le service vraiment aléatoire
+    let word = await randomWordService.getRandomWord(difficulty, language, Math.floor(wordsTyped / 5) + 1);
+    
+    // Pour le mode expert, on garde le mot normal (pas inversé)
+    // La logique d'inversion sera gérée dans la saisie
     
     originalWordRef.current = word;
     currentTypedRef.current = '';
 
+    // Calculer la vitesse basée sur le nombre de mots tapés
     const currentSpeed = calculateWordSpeed(difficulty, wordsTyped);
 
     return {
@@ -114,43 +124,6 @@ export const useGame = (language: Language = 'fr') => {
     };
   }, [language]);
 
-  const startGame = useCallback(async (difficulty: DifficultyLevel) => {
-    if (gameLoopRef.current) {
-      cancelAnimationFrame(gameLoopRef.current);
-    }
-    
-    // 🎮 Initialiser la partie avec liste mélangée
-    console.log('🎮 Démarrage du jeu avec liste mélangée (zéro répétition)...');
-    await shuffledWordService.initializeGame(difficulty, language, 1);
-    
-    originalWordRef.current = '';
-    currentTypedRef.current = '';
-    shouldSpawnRef.current = true;
-    setShowNewScoreModal(false);
-    setIsNewHighScore(false);
-    
-    setGameState({
-      isPlaying: true,
-      isPaused: false,
-      isGameOver: false,
-      difficulty,
-      gameStartTime: Date.now(),
-      fallingWords: [],
-      currentInput: '',
-      activeWordId: null,
-      stats: {
-        score: 0,
-        wpm: 0,
-        accuracy: 100,
-        level: 1,
-        wordsTyped: 0,
-        errorsCount: 0,
-        timeElapsed: 0,
-        currentSpeed: 0.3
-      }
-    });
-  }, [language]);
-
   const updateWordPositions = useCallback(() => {
     setGameState(prev => {
       if (!prev.isPlaying || prev.isPaused) return prev;
@@ -159,9 +132,11 @@ export const useGame = (language: Language = 'fr') => {
       const currentWord = prev.fallingWords[0];
       const newY = currentWord.y + currentWord.speed;
       
+      // Game Over si le mot tombe trop bas
       if (newY > 92) {
         console.log('💀 GAME OVER - Mot tombé trop bas:', currentWord.text, 'Y:', newY);
         
+        // Vérifier si c'est un nouveau high score avant le game over
         const finalScore = prev.stats.score;
         setTimeout(() => checkForNewHighScore(finalScore), 100);
         
@@ -197,7 +172,9 @@ export const useGame = (language: Language = 'fr') => {
     });
   }, [checkForNewHighScore]);
 
+  // Gestion d'une touche pressée
   const handleKeyPress = useCallback((key: string) => {
+    // Vérifications préliminaires
     if (gameState.fallingWords.length === 0) {
       return;
     }
@@ -210,6 +187,7 @@ export const useGame = (language: Language = 'fr') => {
     let newTyped = '';
     
     if (isExpertMode) {
+      // Mode expert : saisie de droite à gauche
       const expectedIndex = originalWord.length - 1 - currentTyped.length;
       const expectedChar = originalWord[expectedIndex];
       
@@ -218,21 +196,28 @@ export const useGame = (language: Language = 'fr') => {
         newTyped = currentTyped + key;
       }
     } else {
+      // Modes normaux : saisie de gauche à droite
       newTyped = currentTyped + key;
       isValidKey = originalWord.toLowerCase().startsWith(newTyped.toLowerCase());
     }
     
     if (isValidKey) {
+      // Mettre à jour la ref immédiatement
       currentTypedRef.current = newTyped;
       
+      // Calculer le texte restant pour l'affichage
       let remainingText = '';
       if (isExpertMode) {
+        // En mode expert, on retire les lettres par la droite
         remainingText = originalWord.substring(0, originalWord.length - newTyped.length);
       } else {
+        // En mode normal, on retire les lettres par la gauche
         remainingText = originalWord.substring(newTyped.length);
       }
       
+      // Mot complètement tapé
       if (remainingText === '') {
+        // Reset pour le prochain mot
         currentTypedRef.current = '';
         originalWordRef.current = '';
         shouldSpawnRef.current = true;
@@ -244,7 +229,11 @@ export const useGame = (language: Language = 'fr') => {
           
           const wordsTyped = prev.stats.wordsTyped + 1;
           const wpm = timeElapsed > 0 ? Math.round((wordsTyped / timeElapsed) * 60) : 0;
-          const scoreForWord = originalWord.length;
+          
+          // Nouveau système de scoring : 1 point par lettre
+          const scoreForWord = originalWord.length; // 1 point par lettre
+          
+          // Calculer la nouvelle vitesse pour le prochain mot
           const currentSpeed = calculateWordSpeed(prev.difficulty, wordsTyped);
           
           return {
@@ -264,6 +253,7 @@ export const useGame = (language: Language = 'fr') => {
           };
         });
       } else {
+        // Mettre à jour le mot avec la partie restante
         setGameState(prev => {
           const currentWord = prev.fallingWords[0];
           const updatedWord = {
@@ -280,6 +270,7 @@ export const useGame = (language: Language = 'fr') => {
         });
       }
     } else {
+      // Lettre incorrecte
       setGameState(prev => ({
         ...prev,
         stats: {
@@ -291,7 +282,9 @@ export const useGame = (language: Language = 'fr') => {
     }
   }, [gameState.fallingWords.length, gameState.difficulty]);
 
+  // Gestion de la touche Backspace (désactivée)
   const handleBackspace = useCallback(() => {
+    // Fonctionnalité Backspace désactivée
     return;
   }, []);
 
@@ -300,6 +293,7 @@ export const useGame = (language: Language = 'fr') => {
       return;
     }
     
+    // Récupérer le mot de manière asynchrone avant de mettre à jour l'état
     const currentDifficulty = gameState.difficulty;
     const currentWordsTyped = gameState.stats.wordsTyped;
     
@@ -327,6 +321,45 @@ export const useGame = (language: Language = 'fr') => {
     }
   }, [createFallingWord, gameState.difficulty, gameState.stats.wordsTyped]);
 
+  const startGame = useCallback(async (difficulty: DifficultyLevel) => {
+    if (gameLoopRef.current) {
+      cancelAnimationFrame(gameLoopRef.current);
+    }
+    
+    // Test de connexion pour debug
+    console.log('🎮 Démarrage du jeu avec mots aléatoires...');
+    const connected = await randomWordService.testConnection();
+    console.log('🔗 API connectée:', connected);
+    
+    // Reset complet
+    originalWordRef.current = '';
+    currentTypedRef.current = '';
+    shouldSpawnRef.current = true;
+    setShowNewScoreModal(false);
+    setIsNewHighScore(false);
+    
+    setGameState({
+      isPlaying: true,
+      isPaused: false,
+      isGameOver: false,
+      difficulty,
+      gameStartTime: Date.now(),
+      fallingWords: [],
+      currentInput: '',
+      activeWordId: null,
+      stats: {
+        score: 0,
+        wpm: 0,
+        accuracy: 100,
+        level: 1,
+        wordsTyped: 0,
+        errorsCount: 0,
+        timeElapsed: 0,
+        currentSpeed: 0.3
+      }
+    });
+  }, []);
+
   const pauseGame = useCallback(() => {
     setGameState(prev => ({ ...prev, isPaused: !prev.isPaused }));
   }, []);
@@ -338,6 +371,7 @@ export const useGame = (language: Language = 'fr') => {
     shouldSpawnRef.current = false;
     currentTypedRef.current = '';
     
+    // Vérifier si c'est un nouveau high score avant d'arrêter
     const finalScore = gameState.stats.score;
     if (finalScore > 0) {
       checkForNewHighScore(finalScore);
@@ -383,6 +417,7 @@ export const useGame = (language: Language = 'fr') => {
     }));
   }, []);
 
+  // Boucle de jeu pour le mouvement
   useEffect(() => {
     if (gameState.isPlaying && !gameState.isPaused) {
       const gameLoop = () => {
@@ -402,6 +437,7 @@ export const useGame = (language: Language = 'fr') => {
     };
   }, [gameState.isPlaying, gameState.isPaused, updateWordPositions]);
 
+  // Spawner des mots quand nécessaire
   useEffect(() => {
     if (gameState.isPlaying && !gameState.isPaused && shouldSpawnRef.current) {
       const timer = setTimeout(() => {

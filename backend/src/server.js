@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import scoresRouter from './routes/scores.js';
 import wordsRouter from './routes/words.js';
 import statsRouter from './routes/stats.js';
+import databaseWordsRouter from './routes/databaseWords.js';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/scores', scoresRouter);
 app.use('/api/words', wordsRouter);
 app.use('/api/stats', statsRouter);
+app.use('/api/game-words', databaseWordsRouter);
 
 // Health check
 app.get('/health', (req, res) => {
