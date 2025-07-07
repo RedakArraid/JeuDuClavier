@@ -17,7 +17,10 @@
     "words:import": "node scripts/importWords.js",
     "words:clean": "node scripts/importWords.js --clean",
     "words:smart-import": "node scripts/importWordsWithProgression.js",
-    "words:smart-clean": "node scripts/importWordsWithProgression.js --clean"
+    "words:smart-clean": "node scripts/importWordsWithProgression.js --clean",
+    "words:debug": "node scripts/debugImport.js",
+    "words:simple": "node scripts/simpleImport.js",
+    "words:full": "node scripts/fullImport.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
