@@ -1,0 +1,421 @@
+// backend/prisma/schema.prisma
+// 🎮 Architecture Évolutive Multi-Jeux & Multijoueur
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 👤 Utilisateurs avec profil étendu
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  email         String?   @unique
+  password      String
+  displayName   String?   @map("display_name")
+  avatar        String?   // URL de l'avatar
+  bio           String?   // Biographie courte
+  country       String?   // Code pays (FR, EN, etc.)
+  timezone      String?   // Timezone pour multijoueur
+  isVerified    Boolean   @default(false) @map("is_verified")
+  isPremium     Boolean   @default(false) @map("is_premium")
+  status        UserStatus @default(OFFLINE)
+  lastSeenAt    DateTime? @map("last_seen_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  scores            Score[]
+  gameSessions      GameSession[]
+  friendships       Friendship[] @relation("UserFriendships")
+  friendRequests    Friendship[] @relation("UserFriendRequests")
+  roomMemberships   RoomMember[]
+  createdRooms      GameRoom[]
+  achievements      UserAchievement[]
+  notifications     Notification[]
+  preferences       UserPreference?
+  
+  @@map("users")
+  @@index([username])
+  @@index([status, lastSeenAt])
+}
+
+enum UserStatus {
+  ONLINE
+  AWAY
+  BUSY
+  OFFLINE
+}
+
+// ⚙️ Préférences utilisateur
+model UserPreference {
+  id               String  @id @default(cuid())
+  userId           String  @unique @map("user_id")
+  defaultLanguage  String  @default("fr") @map("default_language")
+  defaultGameType  String  @default("typing") @map("default_game_type")
+  soundEnabled     Boolean @default(true) @map("sound_enabled")
+  musicEnabled     Boolean @default(true) @map("music_enabled")
+  animationsEnabled Boolean @default(true) @map("animations_enabled")
+  theme            String  @default("dark") // dark, light, auto
+  keyboardLayout   String  @default("qwerty") @map("keyboard_layout")
+  autoStartGames   Boolean @default(false) @map("auto_start_games")
+  showLeaderboards Boolean @default(true) @map("show_leaderboards")
+  allowFriendRequests Boolean @default(true) @map("allow_friend_requests")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_preferences")
+}
+
+// 🎮 Types de jeux (extensible)
+model GameType {
+  id          String @id @default(cuid())
+  slug        String @unique // 'typing', 'math', 'memory', etc.
+  name        String
+  description String
+  icon        String? // URL ou nom d'icône
+  isActive    Boolean @default(true) @map("is_active")
+  version     String  @default("1.0.0")
+  minPlayers  Int     @default(1) @map("min_players")
+  maxPlayers  Int     @default(1) @map("max_players")
+  settings    Json    @default("{}") // Configuration spécifique au jeu
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  gameModes     GameMode[]
+  scores        Score[]
+  gameSessions  GameSession[]
+  rooms         GameRoom[]
+  words         Word[]
+  achievements  Achievement[]
+  globalStats   GlobalStats[]
+  
+  @@map("game_types")
+  @@index([slug])
+  @@index([isActive])
+}
+
+// 🏆 Modes de jeu par type (easy, normal, hard, expert, etc.)
+model GameMode {
+  id          String   @id @default(cuid())
+  gameTypeId  String   @map("game_type_id")
+  slug        String   // 'easy', 'normal', 'hard', 'expert', 'blitz', 'marathon'
+  name        String
+  description String?
+  difficulty  Int      @default(1) // 1-10 scale
+  settings    Json     @default("{}") // Configuration spécifique du mode
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  gameType     GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  scores       Score[]
+  gameSessions GameSession[]
+  rooms        GameRoom[]
+  globalStats  GlobalStats[]
+  
+  @@map("game_modes")
+  @@unique([gameTypeId, slug])
+  @@index([gameTypeId, isActive])
+}
+
+// 🏆 Scores unifiés pour tous les jeux
+model Score {
+  id            String     @id @default(cuid())
+  userId        String     @map("user_id")
+  gameTypeId    String     @map("game_type_id")
+  gameModeId    String     @map("game_mode_id")
+  gameSessionId String?    @map("game_session_id")
+  
+  // Métriques génériques (adaptables selon le jeu)
+  primaryScore   Int       // Score principal
+  secondaryScore Int?      // Score secondaire (ex: WPM pour typing)
+  accuracy       Float?    // Précision en %
+  timeElapsed    Int       // Temps en secondes
+  metadata       Json      @default("{}") // Données spécifiques au jeu
+  
+  // Contexte
+  language      String
+  isPersonalBest Boolean   @default(false) @map("is_personal_best")
+  isGlobalRecord Boolean   @default(false) @map("is_global_record")
+  rank          Int?       // Rang au moment du score
+  createdAt     DateTime   @default(now()) @map("created_at")
+  
+  // Relations
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType    GameType     @relation(fields: [gameTypeId], references: [id])
+  gameMode    GameMode     @relation(fields: [gameModeId], references: [id])
+  gameSession GameSession? @relation(fields: [gameSessionId], references: [id])
+  
+  @@map("scores")
+  @@index([gameTypeId, gameModeId, language, primaryScore])
+  @@index([userId, gameTypeId, isPersonalBest])
+  @@index([isGlobalRecord, primaryScore])
+}
+
+// 🎮 Sessions de jeu (solo et multijoueur)
+model GameSession {
+  id         String      @id @default(cuid())
+  userId     String      @map("user_id")
+  gameTypeId String      @map("game_type_id")
+  gameModeId String      @map("game_mode_id")
+  roomId     String?     @map("room_id") // null pour solo
+  
+  // Données de session
+  status      SessionStatus @default(ACTIVE)
+  language    String
+  duration    Int?          // Durée totale en secondes
+  metadata    Json          @default("{}") // Données spécifiques au jeu
+  isCompleted Boolean       @default(false) @map("is_completed")
+  
+  // Timestamps
+  startedAt   DateTime      @default(now()) @map("started_at")
+  endedAt     DateTime?     @map("ended_at")
+  
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameType GameType  @relation(fields: [gameTypeId], references: [id])
+  gameMode GameMode  @relation(fields: [gameModeId], references: [id])
+  room     GameRoom? @relation(fields: [roomId], references: [id])
+  scores   Score[]
+  
+  @@map("game_sessions")
+  @@index([userId, startedAt])
+  @@index([gameTypeId, gameModeId, status])
+  @@index([roomId])
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ABANDONED
+}
+
+// 🏠 Salles multijoueur
+model GameRoom {
+  id           String     @id @default(cuid())
+  name         String
+  code         String     @unique // Code de join (ex: ABCD1234)
+  hostId       String     @map("host_id")
+  gameTypeId   String     @map("game_type_id")
+  gameModeId   String     @map("game_mode_id")
+  
+  // Configuration de salle
+  maxPlayers   Int        @default(4) @map("max_players")
+  isPrivate    Boolean    @default(false) @map("is_private")
+  password     String?    // Hash pour salles privées
+  language     String
+  settings     Json       @default("{}") // Config spécifique
+  
+  // État
+  status       RoomStatus @default(WAITING)
+  currentRound Int        @default(0) @map("current_round")
+  maxRounds    Int        @default(1) @map("max_rounds")
+  
+  // Timestamps
+  createdAt    DateTime   @default(now()) @map("created_at")
+  startedAt    DateTime?  @map("started_at")
+  endedAt      DateTime?  @map("ended_at")
+  
+  // Relations
+  host         User           @relation(fields: [hostId], references: [id])
+  gameType     GameType       @relation(fields: [gameTypeId], references: [id])
+  gameMode     GameMode       @relation(fields: [gameModeId], references: [id])
+  members      RoomMember[]
+  gameSessions GameSession[]
+  
+  @@map("game_rooms")
+  @@index([code])
+  @@index([gameTypeId, gameModeId, status])
+  @@index([isPrivate, language])
+}
+
+enum RoomStatus {
+  WAITING
+  STARTING
+  IN_PROGRESS
+  FINISHED
+  CANCELLED
+}
+
+// 👥 Membres des salles
+model RoomMember {
+  id       String           @id @default(cuid())
+  roomId   String           @map("room_id")
+  userId   String           @map("user_id")
+  status   RoomMemberStatus @default(JOINED)
+  isReady  Boolean          @default(false) @map("is_ready")
+  position Int?             // Position dans la salle
+  joinedAt DateTime         @default(now()) @map("joined_at")
+  leftAt   DateTime?        @map("left_at")
+  
+  // Relations
+  room GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("room_members")
+  @@unique([roomId, userId])
+  @@index([roomId, status])
+}
+
+enum RoomMemberStatus {
+  JOINED
+  READY
+  PLAYING
+  FINISHED
+  LEFT
+}
+
+// 👫 Système d'amis
+model Friendship {
+  id         String           @id @default(cuid())
+  requesterId String           @map("requester_id")
+  addresseeId String           @map("addressee_id")
+  status     FriendshipStatus @default(PENDING)
+  createdAt  DateTime         @default(now()) @map("created_at")
+  acceptedAt DateTime?        @map("accepted_at")
+  
+  // Relations
+  requester User @relation("UserFriendships", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("UserFriendRequests", fields: [addresseeId], references: [id], onDelete: Cascade)
+  
+  @@map("friendships")
+  @@unique([requesterId, addresseeId])
+  @@index([addresseeId, status])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+// 📝 Mots et contenu par jeu
+model Word {
+  id         String   @id @default(cuid())
+  gameTypeId String   @map("game_type_id")
+  text       String
+  language   String
+  difficulty Int      @default(1) // 1-10 scale
+  frequency  Int      @default(1) // Fréquence d'utilisation
+  length     Int      // Longueur
+  category   String?  // Catégorie (animaux, tech, etc.)
+  tags       String[] @default([]) // Tags pour filtering
+  metadata   Json     @default("{}") // Données spécifiques
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  gameType GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  
+  @@map("words")
+  @@unique([gameTypeId, text, language])
+  @@index([gameTypeId, language, difficulty])
+  @@index([language, length, frequency])
+  @@index([category, tags])
+}
+
+// 🏅 Système d'achievements
+model Achievement {
+  id          String            @id @default(cuid())
+  gameTypeId  String?           @map("game_type_id") // null = global
+  slug        String            @unique
+  name        String
+  description String
+  icon        String?
+  rarity      AchievementRarity @default(COMMON)
+  points      Int               @default(10)
+  conditions  Json              @default("{}") // Conditions à remplir
+  isActive    Boolean           @default(true) @map("is_active")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  
+  // Relations
+  gameType        GameType?         @relation(fields: [gameTypeId], references: [id])
+  userAchievements UserAchievement[]
+  
+  @@map("achievements")
+  @@index([gameTypeId, isActive])
+  @@index([rarity, points])
+}
+
+enum AchievementRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+// 🏅 Achievements des utilisateurs
+model UserAchievement {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  achievementId String    @map("achievement_id")
+  unlockedAt    DateTime  @default(now()) @map("unlocked_at")
+  progress      Json      @default("{}") // Progression vers l'achievement
+  
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  
+  @@map("user_achievements")
+  @@unique([userId, achievementId])
+  @@index([userId, unlockedAt])
+}
+
+// 🔔 Système de notifications
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String             @map("user_id")
+  type      NotificationType
+  title     String
+  message   String
+  data      Json               @default("{}") // Données additionnelles
+  isRead    Boolean            @default(false) @map("is_read")
+  createdAt DateTime           @default(now()) @map("created_at")
+  readAt    DateTime?          @map("read_at")
+  
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notifications")
+  @@index([userId, isRead, createdAt])
+}
+
+enum NotificationType {
+  FRIEND_REQUEST
+  GAME_INVITE
+  ACHIEVEMENT_UNLOCKED
+  NEW_HIGH_SCORE
+  ROOM_INVITE
+  SYSTEM
+}
+
+// 📊 Statistiques globales par jeu/mode
+model GlobalStats {
+  id              String   @id @default(cuid())
+  gameTypeId      String   @map("game_type_id")
+  gameModeId      String   @map("game_mode_id")
+  language        String
+  totalGames      Int      @default(0) @map("total_games")
+  totalPlayers    Int      @default(0) @map("total_players")
+  averageScore    Float    @default(0) @map("average_score")
+  topScore        Int      @default(0) @map("top_score")
+  metadata        Json     @default("{}") // Stats spécifiques au jeu
+  lastUpdated     DateTime @updatedAt @map("last_updated")
+  
+  // Relations
+  gameType GameType @relation(fields: [gameTypeId], references: [id], onDelete: Cascade)
+  gameMode GameMode @relation(fields: [gameModeId], references: [id], onDelete: Cascade)
+  
+  @@map("global_stats")
+  @@unique([gameTypeId, gameModeId, language])
+  @@index([gameTypeId, gameModeId])
+}

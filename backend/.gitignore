@@ -1,0 +1,126 @@
+# 🚫 Backend - Fichiers à Ignorer
+
+# ===================================
+# 🗄️ BASE DE DONNÉES & SECRETS
+# ===================================
+
+# Variables d'environnement (CRITIQUE - NE JAMAIS COMMITER)
+.env
+.env.local
+.env.production
+.env.staging
+.env.test
+
+# Fichiers de backup et dumps
+*.sql
+*.dump
+*.backup
+database.sqlite
+database.db
+
+# ===================================
+# 📦 NODE.JS
+# ===================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# ===================================
+# 🗃️ PRISMA
+# ===================================
+
+# Ne PAS ignorer les migrations (importantes pour la prod)
+# prisma/migrations/ - À GARDER
+
+# Client Prisma généré (sera régénéré)
+generated/
+.prisma/
+
+# Cache Prisma
+.env.prisma
+
+# ===================================
+# 📝 LOGS & DEBUG
+# ===================================
+
+# Application logs
+logs/
+*.log
+combined.log
+error.log
+debug.log
+
+# PM2 logs
+pm2.log
+ecosystem.config.js.backup
+
+# ===================================
+# 🧪 TESTS
+# ===================================
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Test databases
+test.db
+test.sqlite
+*test*.sql
+
+# ===================================
+# 🚀 BUILD & DIST
+# ===================================
+
+# Distribution files
+dist/
+build/
+
+# ===================================
+# 🔐 SÉCURITÉ
+# ===================================
+
+# Certificats et clés
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Secrets et tokens
+secrets/
+auth-keys/
+jwt-keys/
+
+# ===================================
+# 📊 DATA & UPLOADS
+# ===================================
+
+# Fichiers uploadés
+uploads/
+temp/
+cache/
+
+# Exports de données sensibles
+user-data/
+exports/
+backups/
+
+# ===================================
+# 🔧 CONFIGURATION
+# ===================================
+
+# Configuration locale
+config.local.js
+config.local.json
+
+# Docker overrides
+docker-compose.override.yml

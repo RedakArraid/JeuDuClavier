@@ -1,20 +1,34 @@
+# 🚫 JeuDuClavier - Fichiers à Ignorer
+
+# ===================================
+# 🗄️ BASE DE DONNÉES & SECRETS
+# ===================================
+
+# Variables d'environnement avec secrets
+.env
+.env.local
+.env.production
+.env.staging
+
+# Fichiers de backup PostgreSQL
+*.sql
+*.dump
+*.backup
+
+# Logs de base de données
+db.log
+postgres.log
+
+# ===================================
+# 📦 NODE.JS & NPM
+# ===================================
+
 # Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Build outputs
-frontend/dist/
-backend/dist/
-*.tsbuildinfo
+pnpm-debug.log*
 
 # Runtime data
 pids
@@ -26,39 +40,80 @@ pids
 coverage/
 *.lcov
 
-# nyc test coverage
-.nyc_output
+# ===================================
+# 🔧 OUTILS DE BUILD
+# ===================================
 
-# Dependency directories
-jspm_packages/
+# Vite
+dist/
+dist-ssr/
+*.local
 
-# Optional npm cache directory
-.npm
+# Parcel
+.cache/
+.parcel-cache/
 
-# Optional REPL history
-.node_repl_history
+# Next.js
+.next/
+out/
 
-# Output of 'npm pack'
-*.tgz
+# Nuxt.js
+.nuxt/
 
-# Yarn Integrity file
-.yarn-integrity
+# ===================================
+# 🗃️ PRISMA & ORM
+# ===================================
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
+# Migrations appliquées (garder les fichiers de migration)
+# backend/prisma/migrations/*/migration.sql (à garder)
 
-# vite cache
-.vite
+# Client généré (sera régénéré)
+backend/generated/
 
-# Editor directories and files
+# Cache Prisma
+backend/.prisma/
+
+# ===================================
+# 🧪 TESTS & DÉVELOPPEMENT
+# ===================================
+
+# Jest
+coverage/
+*.coverage
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+
+# Testing
+test-results/
+playwright-report/
+
+# ===================================
+# 📝 ÉDITEURS & IDE
+# ===================================
+
+# VS Code
 .vscode/
-.idea/
-*.swp
-*.swo
-*~
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# OS generated files
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+
+# ===================================
+# 💻 SYSTÈME D'EXPLOITATION
+# ===================================
+
+# macOS
 .DS_Store
 .DS_Store?
 ._*
@@ -67,63 +122,129 @@ jspm_packages/
 ehthumbs.db
 Thumbs.db
 
-# Logs
-logs
-*.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Optional eslint cache
-.eslintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-.env.test
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# IDE
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-
-# OS
-.DS_Store
+# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ===================================
+# 🚀 DÉPLOIEMENT & CI/CD
+# ===================================
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Logs de déploiement
+deploy.log
+deployment/
+
+# ===================================
+# 📊 DONNÉES & UPLOADS
+# ===================================
+
+# Fichiers uploadés par les utilisateurs
+uploads/
+temp/
+*.tmp
+
+# Exports de données
+exports/
+backups/
+*.csv
+*.xlsx
+*.json.backup
+
+# Images temporaires
+temp-images/
+processed/
+
+# ===================================
+# 🔐 CERTIFICATS & CLÉS
+# ===================================
+
+# Certificats SSL
+*.pem
+*.key
+*.crt
+*.csr
+
+# Clés API et tokens
+api-keys.txt
+tokens.json
+credentials.json
+
+# ===================================
+# 📈 MONITORING & LOGS
+# ===================================
+
+# Logs applicatifs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Monitoring
+newrelic.js
+newrelic_agent.log
+
+# ===================================
+# 🎮 SPÉCIFIQUE AU PROJET
+# ===================================
+
+# Données de jeu temporaires
+game-data/temp/
+user-sessions/
+
+# Cache des mots
+words-cache/
+dictionary-cache/
+
+# Analytics temporaires
+analytics/temp/
+
+# Fichiers de configuration dynamiques
+config/generated/
+
+# ===================================
+# 📱 MOBILE (FUTUR)
+# ===================================
+
+# React Native
+*.expo/
+.expo-shared/
+
+# Android
+*.apk
+*.aab
+
+# iOS
+*.ipa
+ios/build/
+
+# ===================================
+# 🧹 NETTOYAGE & OPTIMISATION
+# ===================================
+
+# Fichiers temporaires
+*.swp
+*.swo
+*~
+
+# Cache
+.cache/
+.temp/
+
+# Anciens fichiers
+*.old
+*.bak
+*.backup

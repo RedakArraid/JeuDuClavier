@@ -1,0 +1,161 @@
+# 🚫 Frontend - Fichiers à Ignorer
+
+# ===================================
+# 🏗️ BUILD & DIST
+# ===================================
+
+# Vite build output
+dist/
+dist-ssr/
+*.local
+
+# Build artifacts
+build/
+out/
+
+# ===================================
+# 📦 NODE.JS
+# ===================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===================================
+# 🔧 ENVIRONNEMENT
+# ===================================
+
+# Variables d'environnement locales
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ===================================
+# 🧪 TESTS
+# ===================================
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Cypress
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Jest
+__coverage__/
+
+# ===================================
+# 📱 MOBILE (FUTUR)
+# ===================================
+
+# Expo
+.expo/
+.expo-shared/
+
+# React Native
+ios/build/
+android/build/
+android/app/build/
+
+# ===================================
+# 🎨 ASSETS & MEDIA
+# ===================================
+
+# Images temporaires
+temp-images/
+processed-images/
+optimized/
+
+# Vidéos lourdes
+*.mp4
+*.mov
+*.avi
+videos/
+
+# Audio (sauf assets de jeu)
+temp-audio/
+*.wav
+*.mp3
+audio-processing/
+
+# ===================================
+# 📊 ANALYTICS & TRACKING
+# ===================================
+
+# Analytics locaux
+analytics/
+user-tracking/
+*.analytics
+
+# Heatmaps
+heatmap-data/
+
+# ===================================
+# 🔧 DÉVELOPPEMENT
+# ===================================
+
+# Storybook
+storybook-static/
+
+# Bundle analyzer
+bundle-report.html
+stats.json
+
+# Source maps de production
+*.map
+
+# ===================================
+# 🚀 DÉPLOIEMENT
+# ===================================
+
+# Vercel
+.vercel/
+
+# Netlify
+.netlify/
+
+# Surge
+.surge/
+
+# ===================================
+# 🎮 SPÉCIFIQUE AU JEU
+# ===================================
+
+# Cache des assets de jeu
+game-assets/cache/
+textures/processed/
+
+# Données de session temporaires
+user-sessions/
+temp-scores/
+
+# Cache des leaderboards
+leaderboard-cache/
+
+# ===================================
+# 🔤 FONTS & TYPOGRAPHIE
+# ===================================
+
+# Fonts temporaires
+fonts/temp/
+typography/cache/
+
+# ===================================
+# 🌐 I18N
+# ===================================
+
+# Traductions temporaires
+i18n/temp/
+translations/cache/
+locale-cache/
