@@ -15,7 +15,9 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "words:import": "node scripts/importWords.js",
-    "words:clean": "node scripts/importWords.js --clean"
+    "words:clean": "node scripts/importWords.js --clean",
+    "words:smart-import": "node scripts/importWordsWithProgression.js",
+    "words:smart-clean": "node scripts/importWordsWithProgression.js --clean"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
